@@ -5,6 +5,7 @@ import { Separator } from "@/components/ui/separator";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Minus, Plus, Trash2, ShoppingBag, Sandwich } from "lucide-react";
 import { useCart } from "@/context/CartContext";
+import { restaurantInfo } from "@/data/menu";
 
 export default function CartDrawer() {
   const { items, isOpen, setIsOpen, removeItem, updateQuantity, totalPrice, clearCart } = useCart();
@@ -119,7 +120,7 @@ export default function CartDrawer() {
                     .join("\n");
                   const text = `🥪 *Nuevo Pedido - Sanguchería Mary*\n\n${message}\n\n*Total: S/${totalPrice.toFixed(2)}*`;
                   window.open(
-                    `https://wa.me/51999999999?text=${encodeURIComponent(text)}`,
+                    `https://wa.me/${restaurantInfo.phone.replace("+", "")}?text=${encodeURIComponent(text)}`,
                     "_blank"
                   );
                 }}

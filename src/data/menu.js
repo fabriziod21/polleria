@@ -3,7 +3,7 @@ export const restaurantInfo = {
   slogan: "¡Los mejores sanguchos de la ciudad!",
   address: "Av. La Merced N°936 - Carhuaz",
   hours: "Atendemos de 10 am a 10 pm",
-  phone: "+51999999999",
+  phone: "+51946792798",
   social: {
     facebook: "#",
     instagram: "#",

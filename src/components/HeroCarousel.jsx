@@ -5,26 +5,6 @@ import { ChevronLeft, ChevronRight, Sandwich } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { heroSlides, restaurantInfo } from "@/data/menu";
 
-const slideVariants = {
-  enter: (direction) => ({
-    x: direction > 0 ? "100%" : "-100%",
-    opacity: 0,
-    scale: 1.1,
-  }),
-  center: {
-    x: 0,
-    opacity: 1,
-    scale: 1,
-    transition: { duration: 0.7, ease: [0.25, 0.46, 0.45, 0.94] },
-  },
-  exit: (direction) => ({
-    x: direction > 0 ? "-100%" : "100%",
-    opacity: 0,
-    scale: 0.95,
-    transition: { duration: 0.5, ease: [0.25, 0.46, 0.45, 0.94] },
-  }),
-};
-
 const textVariants = {
   hidden: { opacity: 0, y: 40 },
   visible: (i = 0) => ({
@@ -64,7 +44,8 @@ export default function HeroCarousel() {
 
   return (
     <section
-      className="relative w-full h-[85vh] md:h-screen overflow-hidden bg-black"
+      className="relative w-full overflow-hidden bg-black"
+      style={{ height: "85vh", minHeight: "500px", maxHeight: "100vh" }}
       onMouseEnter={() => setIsAutoPlaying(false)}
       onMouseLeave={() => setIsAutoPlaying(true)}
       onTouchStart={() => setIsAutoPlaying(false)}
@@ -72,16 +53,15 @@ export default function HeroCarousel() {
         setTimeout(() => setIsAutoPlaying(true), 3000);
       }}
     >
-      {/* Background Slides */}
-      <AnimatePresence initial={false} custom={direction} mode="popLayout">
+      {/* Background Slides - crossfade only, no layout shift */}
+      <AnimatePresence initial={false}>
         <motion.div
           key={slide.id}
-          custom={direction}
-          variants={slideVariants}
-          initial="enter"
-          animate="center"
-          exit="exit"
-          className="absolute inset-0"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.8, ease: "easeInOut" }}
+          style={{ position: "absolute", inset: 0 }}
         >
           <img
             src={slide.image}
@@ -156,8 +136,7 @@ export default function HeroCarousel() {
                 <a href={`tel:${restaurantInfo.phone}`}>
                   <Button
                     size="lg"
-                    variant="outline"
-                    className="border-white/30 text-white hover:bg-white/10 px-6 sm:px-8 py-5 sm:py-6 text-sm sm:text-base backdrop-blur-sm"
+                    className="bg-transparent border border-white/40 text-white hover:bg-white/10 px-6 sm:px-8 py-5 sm:py-6 text-sm sm:text-base backdrop-blur-sm"
                   >
                     Llamar Ahora
                   </Button>
