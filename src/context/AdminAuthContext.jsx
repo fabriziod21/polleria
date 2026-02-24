@@ -1,29 +1,45 @@
-import { createContext, useContext, useCallback } from "react";
-import { useLocalStorage } from "@/hooks/useLocalStorage";
+import { createContext, useContext, useState, useCallback } from "react";
+import { loginAdmin } from "@/lib/database";
 
 const AdminAuthContext = createContext();
-const ADMIN_PASSWORD = "mary2026";
 
 export function AdminAuthProvider({ children }) {
-  const [isAuthenticated, setIsAuthenticated] = useLocalStorage("mary_admin_auth", false);
-
-  const login = useCallback(
-    (password) => {
-      if (password === ADMIN_PASSWORD) {
-        setIsAuthenticated(true);
-        return true;
-      }
+  const [isAuthenticated, setIsAuthenticated] = useState(() => {
+    try {
+      return JSON.parse(localStorage.getItem("mary_admin_auth")) || false;
+    } catch {
       return false;
-    },
-    [setIsAuthenticated]
-  );
+    }
+  });
+  const [adminUser, setAdminUser] = useState(() => {
+    try {
+      return JSON.parse(localStorage.getItem("mary_admin_user")) || null;
+    } catch {
+      return null;
+    }
+  });
+
+  const login = useCallback(async (email, contrasena) => {
+    const user = await loginAdmin(email, contrasena);
+    if (user) {
+      setIsAuthenticated(true);
+      setAdminUser(user);
+      localStorage.setItem("mary_admin_auth", "true");
+      localStorage.setItem("mary_admin_user", JSON.stringify(user));
+      return true;
+    }
+    return false;
+  }, []);
 
   const logout = useCallback(() => {
     setIsAuthenticated(false);
-  }, [setIsAuthenticated]);
+    setAdminUser(null);
+    localStorage.removeItem("mary_admin_auth");
+    localStorage.removeItem("mary_admin_user");
+  }, []);
 
   return (
-    <AdminAuthContext.Provider value={{ isAuthenticated, login, logout }}>
+    <AdminAuthContext.Provider value={{ isAuthenticated, adminUser, login, logout }}>
       {children}
     </AdminAuthContext.Provider>
   );

@@ -6,11 +6,12 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Minus, Plus, ShoppingCart, Check, ChevronDown, ChevronUp, X } from "lucide-react";
-import { salsas, extras, bebidas } from "@/data/menu";
+import { useMenu } from "@/context/MenuContext";
 import { useCart } from "@/context/CartContext";
 
 export default function ProductModal({ product, open, onClose, editingCartItem, onEditDone }) {
   const { addItem, updateItem } = useCart();
+  const { salsas, extras, bebidas } = useMenu();
   const isEditing = !!editingCartItem;
   const [quantity, setQuantity] = useState(1);
   const [selectedSalsas, setSelectedSalsas] = useState([]);

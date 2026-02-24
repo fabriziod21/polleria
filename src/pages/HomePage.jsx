@@ -4,7 +4,8 @@ import { MapPin, Clock, Phone, Facebook, Instagram, ChevronRight, Sandwich, Star
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { restaurantInfo, categories, products } from "@/data/menu";
+import { restaurantInfo } from "@/data/menu";
+import { useMenu } from "@/context/MenuContext";
 import HeroCarousel from "@/components/HeroCarousel";
 
 const fadeUp = {
@@ -21,9 +22,19 @@ const stagger = {
 };
 
 export default function HomePage() {
-  const featuredProducts = products.filter(p =>
+  const { categorias, productos, cargando } = useMenu();
+
+  const featuredProducts = productos.filter(p =>
     ["hamburguesas", "sanguchos", "hotdogs"].includes(p.categoryId)
   ).slice(0, 6);
+
+  if (cargando) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin w-8 h-8 border-2 border-red-500 border-t-transparent rounded-full" />
+      </div>
+    );
+  }
 
   return (
     <div className="overflow-hidden">
@@ -88,7 +99,7 @@ export default function HomePage() {
             variants={stagger}
             className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6"
           >
-            {categories.map((cat, i) => (
+            {categorias.map((cat, i) => (
               <motion.div key={cat.id} variants={fadeUp} custom={i}>
                 <Link to={`/menu?category=${cat.id}`}>
                   <Card className="group relative overflow-hidden bg-zinc-900 border-zinc-800 hover:border-red-500/50 transition-all duration-300 cursor-pointer">

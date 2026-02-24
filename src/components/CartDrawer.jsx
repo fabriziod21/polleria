@@ -1,4 +1,5 @@
 import { useState, useCallback } from "react";
+import { crearPedido } from "@/lib/database";
 import { motion, AnimatePresence } from "framer-motion";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
@@ -9,7 +10,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Minus, Plus, Trash2, ShoppingBag, Pencil, Truck, Store, UtensilsCrossed, MapPin, MessageSquare } from "lucide-react";
 import { useCart } from "@/context/CartContext";
-import { restaurantInfo, salsas } from "@/data/menu";
+import { useMenu } from "@/context/MenuContext";
+import { restaurantInfo } from "@/data/menu";
 
 const orderTypes = [
   { value: "delivery", label: "Delivery", icon: Truck },
@@ -25,6 +27,7 @@ const tipoLabels = {
 
 export default function CartDrawer() {
   const { items, isOpen, setIsOpen, removeItem, updateQuantity, totalPrice, clearCart, setEditingItem } = useCart();
+  const { salsas } = useMenu();
   const [tipoPedido, setTipoPedido] = useState("");
   const [direccion, setDireccion] = useState("");
   const [comentarios, setComentarios] = useState("");
@@ -46,7 +49,33 @@ export default function CartDrawer() {
     return (item.product.price + extrasPrice + bebidasPrice) * item.quantity;
   };
 
-  const handleSendOrder = () => {
+  const handleSendOrder = async () => {
+    // Guardar pedido en Supabase
+    const pedidoId = `ORD-${Date.now()}`;
+    try {
+      await crearPedido(
+        {
+          id: pedidoId,
+          tipo_pedido: tipoPedido,
+          direccion: tipoPedido === "delivery" ? direccion.trim() : null,
+          comentarios: comentarios.trim() || null,
+          total: totalPrice,
+        },
+        items.map((item) => ({
+          producto_id: item.product.id,
+          nombre_producto: item.product.name,
+          cantidad: item.quantity,
+          precio_unitario: item.product.price,
+          salsas_seleccionadas: item.selectedSalsas,
+          extras_seleccionados: item.selectedExtras,
+          bebidas_seleccionadas: item.selectedBebidas,
+        }))
+      );
+    } catch (err) {
+      console.error("Error guardando pedido:", err);
+    }
+
+    // Construir mensaje de WhatsApp
     const productLines = items
       .map((item) => {
         let line = `- ${item.quantity}x ${item.product.name} - S/${getItemTotal(item).toFixed(2)}`;

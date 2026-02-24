@@ -1,76 +1,206 @@
-import { createContext, useContext, useCallback, useMemo, useEffect } from "react";
-import { useLocalStorage } from "@/hooks/useLocalStorage";
-import { initializeMockData, ORDERS_KEY, FINANCES_KEY, PRODUCTS_KEY } from "@/data/mockData";
-import { categories } from "@/data/menu";
+import { createContext, useContext, useState, useCallback, useMemo, useEffect } from "react";
+import { useMenu } from "@/context/MenuContext";
+import {
+  fetchProductosAdmin,
+  crearProducto,
+  actualizarProducto,
+  eliminarProducto,
+  fetchPedidos,
+  actualizarEstadoPedido,
+  fetchFinanzas,
+  crearFinanza,
+  eliminarFinanza,
+} from "@/lib/database";
 
 const AdminDataContext = createContext();
 
 export function AdminDataProvider({ children }) {
-  // Initialize mock data on first mount
+  const { categorias } = useMenu();
+  const [products, setProducts] = useState([]);
+  const [orders, setOrders] = useState([]);
+  const [finances, setFinances] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  // Cargar datos al montar
   useEffect(() => {
-    initializeMockData();
+    async function cargar() {
+      try {
+        setLoading(true);
+        const [prods, ords, fins] = await Promise.all([
+          fetchProductosAdmin(),
+          fetchPedidos().catch(() => []),
+          fetchFinanzas().catch(() => []),
+        ]);
+
+        // Mapear productos de BD a formato frontend
+        setProducts(prods.map((p) => ({
+          id: p.id,
+          categoryId: p.categoria_id,
+          name: p.nombre,
+          description: p.descripcion,
+          price: Number(p.precio),
+          image: p.imagen,
+          hasSalsas: p.tiene_salsas,
+          hasExtras: p.tiene_extras,
+          hasBebidas: p.tiene_bebidas,
+          active: p.activo,
+        })));
+
+        // Mapear pedidos
+        setOrders(ords.map((o) => ({
+          id: o.id,
+          fecha: o.fecha_registro,
+          tipoPedido: o.tipo_pedido,
+          direccion: o.direccion,
+          comentarios: o.comentarios,
+          total: Number(o.total),
+          estado: o.estado,
+          items: (o.pedido_detalle || []).map((d) => ({
+            id: d.id,
+            productId: d.producto_id,
+            name: d.nombre_producto,
+            quantity: d.cantidad,
+            unitPrice: Number(d.precio_unitario),
+          })),
+        })));
+
+        // Mapear finanzas
+        setFinances(fins.map((f) => ({
+          id: f.id,
+          fecha: f.fecha,
+          tipo: f.tipo,
+          categoria: f.categoria,
+          descripcion: f.descripcion,
+          monto: Number(f.monto),
+        })));
+      } catch (err) {
+        console.error("Error cargando datos admin:", err);
+      } finally {
+        setLoading(false);
+      }
+    }
+    cargar();
   }, []);
 
-  const [products, setProducts] = useLocalStorage(PRODUCTS_KEY, []);
-  const [orders, setOrders] = useLocalStorage(ORDERS_KEY, []);
-  const [finances, setFinances] = useLocalStorage(FINANCES_KEY, []);
-
   // Products CRUD
-  const addProduct = useCallback(
-    (product) => {
-      const newProduct = { ...product, id: Date.now() };
-      setProducts((prev) => [...prev, newProduct]);
-    },
-    [setProducts]
-  );
+  const addProduct = useCallback(async (product) => {
+    const dbProduct = {
+      categoria_id: product.categoryId,
+      nombre: product.name,
+      descripcion: product.description,
+      precio: parseFloat(product.price) || 0,
+      imagen: product.image,
+      tiene_salsas: product.hasSalsas || false,
+      tiene_extras: product.hasExtras || false,
+      tiene_bebidas: product.hasBebidas || false,
+    };
+    const created = await crearProducto(dbProduct);
+    setProducts((prev) => [...prev, {
+      id: created.id,
+      categoryId: created.categoria_id,
+      name: created.nombre,
+      description: created.descripcion,
+      price: Number(created.precio),
+      image: created.imagen,
+      hasSalsas: created.tiene_salsas,
+      hasExtras: created.tiene_extras,
+      hasBebidas: created.tiene_bebidas,
+      active: created.activo,
+    }]);
+  }, []);
 
-  const updateProduct = useCallback(
-    (id, data) => {
-      setProducts((prev) =>
-        prev.map((p) => (p.id === id ? { ...p, ...data } : p))
-      );
-    },
-    [setProducts]
-  );
+  const updateProduct = useCallback(async (id, data) => {
+    const dbData = {};
+    if (data.categoryId !== undefined) dbData.categoria_id = data.categoryId;
+    if (data.name !== undefined) dbData.nombre = data.name;
+    if (data.description !== undefined) dbData.descripcion = data.description;
+    if (data.price !== undefined) dbData.precio = parseFloat(data.price) || 0;
+    if (data.image !== undefined) dbData.imagen = data.image;
+    if (data.hasSalsas !== undefined) dbData.tiene_salsas = data.hasSalsas;
+    if (data.hasExtras !== undefined) dbData.tiene_extras = data.hasExtras;
+    if (data.hasBebidas !== undefined) dbData.tiene_bebidas = data.hasBebidas;
 
-  const deleteProduct = useCallback(
-    (id) => {
-      setProducts((prev) => prev.filter((p) => p.id !== id));
-    },
-    [setProducts]
-  );
+    const updated = await actualizarProducto(id, dbData);
+    setProducts((prev) =>
+      prev.map((p) => p.id === id ? {
+        id: updated.id,
+        categoryId: updated.categoria_id,
+        name: updated.nombre,
+        description: updated.descripcion,
+        price: Number(updated.precio),
+        image: updated.imagen,
+        hasSalsas: updated.tiene_salsas,
+        hasExtras: updated.tiene_extras,
+        hasBebidas: updated.tiene_bebidas,
+        active: updated.activo,
+      } : p)
+    );
+  }, []);
+
+  const deleteProduct = useCallback(async (id) => {
+    await eliminarProducto(id);
+    setProducts((prev) => prev.filter((p) => p.id !== id));
+  }, []);
 
   // Orders
-  const updateOrderStatus = useCallback(
-    (id, estado) => {
-      setOrders((prev) =>
-        prev.map((o) => (o.id === id ? { ...o, estado } : o))
-      );
-    },
-    [setOrders]
-  );
+  const updateOrderStatus = useCallback(async (id, estado) => {
+    await actualizarEstadoPedido(id, estado);
+    setOrders((prev) =>
+      prev.map((o) => (o.id === id ? { ...o, estado } : o))
+    );
+  }, []);
+
+  const refreshOrders = useCallback(async () => {
+    const ords = await fetchPedidos();
+    setOrders(ords.map((o) => ({
+      id: o.id,
+      fecha: o.fecha_registro,
+      tipoPedido: o.tipo_pedido,
+      direccion: o.direccion,
+      comentarios: o.comentarios,
+      total: Number(o.total),
+      estado: o.estado,
+      items: (o.pedido_detalle || []).map((d) => ({
+        id: d.id,
+        productId: d.producto_id,
+        name: d.nombre_producto,
+        quantity: d.cantidad,
+        unitPrice: Number(d.precio_unitario),
+      })),
+    })));
+  }, []);
 
   // Finances
-  const addFinanceEntry = useCallback(
-    (entry) => {
-      const newEntry = { ...entry, id: `FIN-${Date.now()}` };
-      setFinances((prev) => [newEntry, ...prev]);
-    },
-    [setFinances]
-  );
+  const addFinanceEntry = useCallback(async (entry) => {
+    const dbEntry = {
+      id: `FIN-${Date.now()}`,
+      fecha: entry.fecha,
+      tipo: entry.tipo,
+      categoria: entry.categoria,
+      descripcion: entry.descripcion,
+      monto: parseFloat(entry.monto) || 0,
+    };
+    const created = await crearFinanza(dbEntry);
+    setFinances((prev) => [{
+      id: created.id,
+      fecha: created.fecha,
+      tipo: created.tipo,
+      categoria: created.categoria,
+      descripcion: created.descripcion,
+      monto: Number(created.monto),
+    }, ...prev]);
+  }, []);
 
-  const deleteFinanceEntry = useCallback(
-    (id) => {
-      setFinances((prev) => prev.filter((f) => f.id !== id));
-    },
-    [setFinances]
-  );
+  const deleteFinanceEntry = useCallback(async (id) => {
+    await eliminarFinanza(id);
+    setFinances((prev) => prev.filter((f) => f.id !== id));
+  }, []);
 
   // Computed values
   const today = new Date().toISOString().split("T")[0];
 
   const todayOrders = useMemo(
-    () => orders.filter((o) => o.fecha.startsWith(today)),
+    () => orders.filter((o) => o.fecha && o.fecha.startsWith(today)),
     [orders, today]
   );
 
@@ -87,7 +217,7 @@ export function AdminDataProvider({ children }) {
   const productsSoldToday = useMemo(
     () =>
       todayOrders.reduce(
-        (sum, o) => sum + o.items.reduce((s, i) => s + i.quantity, 0),
+        (sum, o) => sum + (o.items || []).reduce((s, i) => s + i.quantity, 0),
         0
       ),
     [todayOrders]
@@ -101,7 +231,7 @@ export function AdminDataProvider({ children }) {
       d.setDate(d.getDate() - i);
       const key = d.toISOString().split("T")[0];
       const total = orders
-        .filter((o) => o.fecha.startsWith(key))
+        .filter((o) => o.fecha && o.fecha.startsWith(key))
         .reduce((sum, o) => sum + o.total, 0);
       days.push({
         day: dayNames[d.getDay()],
@@ -115,17 +245,17 @@ export function AdminDataProvider({ children }) {
   const ordersByCategory = useMemo(() => {
     const counts = {};
     orders.forEach((o) => {
-      o.items.forEach((item) => {
+      (o.items || []).forEach((item) => {
         const product = products.find((p) => p.id === item.productId);
         if (product) {
-          const cat = categories.find((c) => c.id === product.categoryId);
+          const cat = categorias.find((c) => c.id === product.categoryId);
           const name = cat ? cat.name : "Otros";
           counts[name] = (counts[name] || 0) + item.quantity;
         }
       });
     });
     return Object.entries(counts).map(([name, count]) => ({ name, count }));
-  }, [orders, products]);
+  }, [orders, products, categorias]);
 
   const financeSummary = useMemo(() => {
     const totalEntradas = finances
@@ -145,10 +275,11 @@ export function AdminDataProvider({ children }) {
     <AdminDataContext.Provider
       value={{
         products, addProduct, updateProduct, deleteProduct,
-        orders, updateOrderStatus,
+        orders, updateOrderStatus, refreshOrders,
         finances, addFinanceEntry, deleteFinanceEntry,
         todayOrders, todaySales, averageTicket, productsSoldToday,
         salesLast7Days, ordersByCategory, financeSummary,
+        loading,
       }}
     >
       {children}

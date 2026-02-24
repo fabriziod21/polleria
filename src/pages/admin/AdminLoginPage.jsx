@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useNavigate, Navigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Sandwich, Eye, EyeOff, Lock } from "lucide-react";
+import { Sandwich, Eye, EyeOff, Lock, Mail } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
@@ -10,22 +10,32 @@ import { useAdminAuth } from "@/context/AdminAuthContext";
 export default function AdminLoginPage() {
   const { isAuthenticated, login } = useAdminAuth();
   const navigate = useNavigate();
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   if (isAuthenticated) {
     return <Navigate to="/admin/dashboard" replace />;
   }
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    const success = login(password);
-    if (success) {
-      navigate("/admin/dashboard");
-    } else {
+    setLoading(true);
+    try {
+      const success = await login(email, password);
+      if (success) {
+        navigate("/admin/dashboard");
+      } else {
+        setError(true);
+        setTimeout(() => setError(false), 2000);
+      }
+    } catch {
       setError(true);
       setTimeout(() => setError(false), 2000);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -52,6 +62,22 @@ export default function AdminLoginPage() {
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-2">
                 <label className="text-sm text-gray-400 flex items-center gap-2">
+                  <Mail className="w-3.5 h-3.5" />
+                  Email
+                </label>
+                <Input
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="admin@sangucheriamary.com"
+                  className="bg-zinc-800 border-zinc-700 text-white placeholder:text-gray-600"
+                  required
+                  autoFocus
+                />
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-sm text-gray-400 flex items-center gap-2">
                   <Lock className="w-3.5 h-3.5" />
                   Contraseña
                 </label>
@@ -68,7 +94,7 @@ export default function AdminLoginPage() {
                       className={`bg-zinc-800 border-zinc-700 text-white placeholder:text-gray-600 pr-10 ${
                         error ? "border-red-500 focus-visible:ring-red-500" : "focus-visible:ring-red-500/50"
                       }`}
-                      autoFocus
+                      required
                     />
                     <button
                       type="button"
@@ -85,16 +111,17 @@ export default function AdminLoginPage() {
                     animate={{ opacity: 1 }}
                     className="text-red-400 text-xs"
                   >
-                    Contraseña incorrecta
+                    Email o contraseña incorrectos
                   </motion.p>
                 )}
               </div>
 
               <Button
                 type="submit"
-                className="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-5"
+                disabled={loading}
+                className="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-5 disabled:opacity-50"
               >
-                Ingresar
+                {loading ? "Ingresando..." : "Ingresar"}
               </Button>
             </form>
           </CardContent>

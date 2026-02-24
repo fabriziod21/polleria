@@ -1,4 +1,5 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { MenuProvider } from "@/context/MenuContext";
 import { CartProvider } from "@/context/CartContext";
 import { AdminAuthProvider } from "@/context/AdminAuthContext";
 import { AdminDataProvider } from "@/context/AdminDataContext";
@@ -16,6 +17,7 @@ import FinanzasPage from "@/pages/admin/FinanzasPage";
 function App() {
   return (
     <BrowserRouter>
+      <MenuProvider>
       <CartProvider>
         <AdminAuthProvider>
           <AdminDataProvider>
@@ -43,6 +45,7 @@ function App() {
           </AdminDataProvider>
         </AdminAuthProvider>
       </CartProvider>
+      </MenuProvider>
     </BrowserRouter>
   );
 }

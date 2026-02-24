@@ -7,15 +7,16 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import ProductFormDialog from "@/components/admin/ProductFormDialog";
 import { useAdminData } from "@/context/AdminDataContext";
-import { categories } from "@/data/menu";
+import { useMenu } from "@/context/MenuContext";
 
 export default function ProductosPage() {
   const { products, addProduct, updateProduct, deleteProduct } = useAdminData();
+  const { categorias } = useMenu();
   const [formOpen, setFormOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState(null);
   const [deleteConfirm, setDeleteConfirm] = useState(null);
 
-  const getCategoryName = (id) => categories.find((c) => c.id === id)?.name || id;
+  const getCategoryName = (id) => categorias.find((c) => c.id === id)?.name || id;
 
   const handleSave = (data) => {
     if (editingProduct) {

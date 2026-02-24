@@ -5,7 +5,7 @@ import { Search, Flame, ShoppingCart, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { categories, products } from "@/data/menu";
+import { useMenu } from "@/context/MenuContext";
 import ProductModal from "@/components/ProductModal";
 import { useCart } from "@/context/CartContext";
 
@@ -19,6 +19,7 @@ const fadeUp = {
 };
 
 export default function MenuPage() {
+  const { categorias, productos, cargando } = useMenu();
   const [searchParams, setSearchParams] = useSearchParams();
   const [activeCategory, setActiveCategory] = useState(searchParams.get("category") || "all");
   const [searchQuery, setSearchQuery] = useState("");
@@ -29,19 +30,19 @@ export default function MenuPage() {
   // Open product from URL param
   useEffect(() => {
     const productId = searchParams.get("product");
-    if (productId) {
-      const product = products.find((p) => p.id === parseInt(productId));
+    if (productId && productos.length > 0) {
+      const product = productos.find((p) => p.id === parseInt(productId));
       if (product) {
         setSelectedProduct(product);
         setModalOpen(true);
         setSearchParams({}, { replace: true });
       }
     }
-  }, [searchParams, setSearchParams]);
+  }, [searchParams, setSearchParams, productos]);
 
   // Filter products
   const filteredProducts = useMemo(() => {
-    return products.filter((p) => {
+    return productos.filter((p) => {
       const matchCategory = activeCategory === "all" || p.categoryId === activeCategory;
       const matchSearch =
         searchQuery === "" ||
@@ -49,12 +50,20 @@ export default function MenuPage() {
         p.description.toLowerCase().includes(searchQuery.toLowerCase());
       return matchCategory && matchSearch;
     });
-  }, [activeCategory, searchQuery]);
+  }, [activeCategory, searchQuery, productos]);
 
   const handleCategoryChange = (catId) => {
     setActiveCategory(catId);
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
+
+  if (cargando) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin w-8 h-8 border-2 border-red-500 border-t-transparent rounded-full" />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen">
@@ -70,7 +79,7 @@ export default function MenuPage() {
             <h1 className="text-3xl md:text-5xl font-black text-white">
               {activeCategory === "all"
                 ? "Todo el Menú"
-                : categories.find((c) => c.id === activeCategory)?.name || "Menú"}
+                : categorias.find((c) => c.id === activeCategory)?.name || "Menú"}
             </h1>
           </div>
 
@@ -102,7 +111,7 @@ export default function MenuPage() {
             >
               Todos
             </button>
-            {categories.map((cat) => (
+            {categorias.map((cat) => (
               <button
                 key={cat.id}
                 onClick={() => handleCategoryChange(cat.id)}
