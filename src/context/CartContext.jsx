@@ -5,6 +5,8 @@ const CartContext = createContext();
 export function CartProvider({ children }) {
   const [items, setItems] = useState([]);
   const [isOpen, setIsOpen] = useState(false);
+  const [editingItem, setEditingItem] = useState(null);
+  const [lastAddedItem, setLastAddedItem] = useState(null);
 
   const addItem = useCallback((product, quantity, selectedSalsas, selectedExtras, selectedBebidas) => {
     setItems((prev) => {
@@ -27,7 +29,26 @@ export function CartProvider({ children }) {
         },
       ];
     });
-    setIsOpen(true);
+    setLastAddedItem({ name: product.name, timestamp: Date.now() });
+  }, []);
+
+  const updateItem = useCallback((oldKey, product, quantity, selectedSalsas, selectedExtras, selectedBebidas) => {
+    setItems((prev) => {
+      const newKey = `${product.id}-${selectedSalsas?.join(",")}-${selectedExtras?.map(e => e.id).join(",")}-${selectedBebidas?.map(b => b.id).join(",")}`;
+      const existingWithNewKey = prev.find((item) => item.key === newKey && item.key !== oldKey);
+      if (existingWithNewKey) {
+        return prev
+          .filter((item) => item.key !== oldKey)
+          .map((item) =>
+            item.key === newKey ? { ...item, quantity: item.quantity + quantity } : item
+          );
+      }
+      return prev.map((item) =>
+        item.key === oldKey
+          ? { key: newKey, product, quantity, selectedSalsas: selectedSalsas || [], selectedExtras: selectedExtras || [], selectedBebidas: selectedBebidas || [] }
+          : item
+      );
+    });
   }, []);
 
   const removeItem = useCallback((key) => {
@@ -61,11 +82,16 @@ export function CartProvider({ children }) {
         isOpen,
         setIsOpen,
         addItem,
+        updateItem,
         removeItem,
         updateQuantity,
         clearCart,
         totalItems,
         totalPrice,
+        editingItem,
+        setEditingItem,
+        lastAddedItem,
+        setLastAddedItem,
       }}
     >
       {children}

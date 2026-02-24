@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -9,8 +9,9 @@ import { Minus, Plus, ShoppingCart, Check, ChevronDown, ChevronUp, X } from "luc
 import { salsas, extras, bebidas } from "@/data/menu";
 import { useCart } from "@/context/CartContext";
 
-export default function ProductModal({ product, open, onClose }) {
-  const { addItem } = useCart();
+export default function ProductModal({ product, open, onClose, editingCartItem, onEditDone }) {
+  const { addItem, updateItem } = useCart();
+  const isEditing = !!editingCartItem;
   const [quantity, setQuantity] = useState(1);
   const [selectedSalsas, setSelectedSalsas] = useState([]);
   const [selectedExtras, setSelectedExtras] = useState([]);
@@ -18,6 +19,16 @@ export default function ProductModal({ product, open, onClose }) {
   const [showSalsas, setShowSalsas] = useState(true);
   const [showExtras, setShowExtras] = useState(true);
   const [showBebidas, setShowBebidas] = useState(true);
+
+  // Pre-populate when editing
+  useEffect(() => {
+    if (editingCartItem && open) {
+      setQuantity(editingCartItem.quantity);
+      setSelectedSalsas(editingCartItem.selectedSalsas || []);
+      setSelectedExtras(editingCartItem.selectedExtras || []);
+      setSelectedBebidas(editingCartItem.selectedBebidas || []);
+    }
+  }, [editingCartItem, open]);
 
   const extrasTotal = useMemo(
     () => selectedExtras.reduce((sum, e) => sum + e.price, 0),
@@ -58,7 +69,12 @@ export default function ProductModal({ product, open, onClose }) {
 
   const handleAdd = () => {
     if (!product) return;
-    addItem(product, quantity, selectedSalsas, selectedExtras, selectedBebidas);
+    if (isEditing) {
+      updateItem(editingCartItem.key, product, quantity, selectedSalsas, selectedExtras, selectedBebidas);
+      onEditDone?.();
+    } else {
+      addItem(product, quantity, selectedSalsas, selectedExtras, selectedBebidas);
+    }
     resetAndClose();
   };
 
@@ -345,7 +361,7 @@ export default function ProductModal({ product, open, onClose }) {
             className="flex-1 bg-red-600 hover:bg-red-700 text-white font-bold py-6"
           >
             <ShoppingCart className="w-4 h-4 mr-2" />
-            Agregar S/{totalPrice.toFixed(2)}
+            {isEditing ? "Actualizar" : "Agregar"} S/{totalPrice.toFixed(2)}
           </Button>
         </div>
       </DialogContent>
