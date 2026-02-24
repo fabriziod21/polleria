@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { Menu, X, ShoppingCart, Home, UtensilsCrossed, Sandwich } from "lucide-react";
+import { Menu, X, ShoppingCart, Home, UtensilsCrossed, Sandwich, Settings } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useCart } from "@/context/CartContext";
@@ -55,8 +55,18 @@ export default function Navbar() {
           })}
         </nav>
 
-        {/* Cart + Mobile Toggle */}
-        <div className="flex items-center gap-2">
+        {/* Admin + Cart + Mobile Toggle */}
+        <div className="flex items-center gap-1">
+          <Link to="/admin">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="text-gray-500 hover:text-red-400 hover:bg-red-600/10"
+            >
+              <Settings className="w-4 h-4" />
+            </Button>
+          </Link>
+
           <Button
             variant="ghost"
             size="icon"
@@ -117,6 +127,15 @@ export default function Navbar() {
                   </Link>
                 );
               })}
+              <Link to="/admin" onClick={() => setMobileOpen(false)}>
+                <Button
+                  variant="ghost"
+                  className="w-full justify-start text-gray-500 hover:text-red-400 hover:bg-red-600/10"
+                >
+                  <Settings className="w-4 h-4 mr-3" />
+                  Admin
+                </Button>
+              </Link>
             </nav>
           </motion.div>
         )}
