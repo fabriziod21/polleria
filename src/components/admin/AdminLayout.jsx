@@ -1,15 +1,27 @@
 import { useState } from "react";
-import { Outlet } from "react-router-dom";
+import { Outlet, useLocation } from "react-router-dom";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { Separator } from "@/components/ui/separator";
-import { Sandwich, Heart } from "lucide-react";
+import { Sandwich, Heart, LayoutDashboard, ClipboardList, FolderOpen, Package, Beef, Users, ShoppingCart } from "lucide-react";
 import AdminSidebar from "./AdminSidebar";
 import AdminTopbar from "./AdminTopbar";
 import { AdminThemeProvider, useAdminTheme } from "@/context/AdminThemeContext";
 
+const pageHeaders = {
+  "/admin/dashboard": { title: "Dashboard", description: "Resumen general de tu negocio", icon: LayoutDashboard },
+  "/admin/pedidos": { title: "Pedidos", description: "Gestiona los pedidos de tus clientes", icon: ClipboardList },
+  "/admin/pos": { title: "Punto de Venta", description: "Crear notas de venta rápidas", icon: ShoppingCart },
+  "/admin/categorias": { title: "Categorías", description: "Organiza las categorías de tu menú", icon: FolderOpen },
+  "/admin/productos": { title: "Productos", description: "Administra los productos de tu carta", icon: Package },
+  "/admin/complementos": { title: "Complementos", description: "Salsas, extras y bebidas para tus productos", icon: Beef },
+  "/admin/clientes": { title: "Clientes", description: "Registro y gestión de clientes", icon: Users },
+};
+
 function AdminLayoutInner() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const { isDark } = useAdminTheme();
+  const location = useLocation();
+  const header = pageHeaders[location.pathname];
 
   return (
     <div className={`min-h-screen ${isDark ? "dark" : ""}`}>
@@ -30,6 +42,17 @@ function AdminLayoutInner() {
         <div className="lg:pl-64 min-h-screen flex flex-col">
           <AdminTopbar onMenuToggle={() => setSidebarOpen(true)} />
           <main className="flex-1 p-4 md:p-6">
+            {header && (
+              <div className="flex items-center gap-3 mb-5">
+                <div className="w-10 h-10 rounded-xl bg-red-600/10 dark:bg-red-600/15 flex items-center justify-center shrink-0">
+                  <header.icon className="w-5 h-5 text-red-600 dark:text-red-400" />
+                </div>
+                <div>
+                  <h2 className="text-xl font-bold text-zinc-900 dark:text-white leading-tight">{header.title}</h2>
+                  <p className="text-sm text-gray-500 dark:text-zinc-400">{header.description}</p>
+                </div>
+              </div>
+            )}
             <Outlet />
           </main>
 
@@ -40,8 +63,8 @@ function AdminLayoutInner() {
               <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
                 {/* Brand */}
                 <div className="flex items-center gap-2.5">
-                  <div className="w-7 h-7 rounded-lg bg-gray-100 dark:bg-zinc-800/80 flex items-center justify-center">
-                    <Sandwich className="w-3.5 h-3.5 text-gray-400 dark:text-gray-500" />
+                  <div className="w-7 h-7 rounded-lg bg-red-600/10 dark:bg-red-600/15 flex items-center justify-center">
+                    <Sandwich className="w-3.5 h-3.5 text-red-600 dark:text-red-400" />
                   </div>
                   <div className="flex items-center gap-1.5 text-xs text-gray-400 dark:text-gray-600">
                     <span className="font-medium text-gray-500">Sangucheria Mary</span>
