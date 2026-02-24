@@ -13,6 +13,35 @@ export async function fetchCategorias() {
   return data;
 }
 
+export async function crearCategoria(categoria) {
+  const { data, error } = await supabase
+    .from("categorias")
+    .insert(categoria)
+    .select()
+    .single();
+  if (error) throw error;
+  return data;
+}
+
+export async function actualizarCategoria(id, datos) {
+  const { data, error } = await supabase
+    .from("categorias")
+    .update({ ...datos, fecha_actualizacion: new Date().toISOString() })
+    .eq("id", id)
+    .select()
+    .single();
+  if (error) throw error;
+  return data;
+}
+
+export async function eliminarCategoria(id) {
+  const { error } = await supabase
+    .from("categorias")
+    .update({ estado_registro: 0, fecha_actualizacion: new Date().toISOString() })
+    .eq("id", id);
+  if (error) throw error;
+}
+
 // ============================================
 // PRODUCTOS
 // ============================================
@@ -222,7 +251,7 @@ export async function loginAdmin(email, contrasena) {
     .eq("email", email)
     .eq("contrasena", contrasena)
     .eq("estado_registro", 1)
-    .single();
+    .maybeSingle();
 
   if (error || !data) return null;
   if (data.tipo_usuario?.nombre !== "administrador") return null;

@@ -5,6 +5,9 @@ import {
   crearProducto,
   actualizarProducto,
   eliminarProducto,
+  crearCategoria,
+  actualizarCategoria,
+  eliminarCategoria,
   fetchPedidos,
   actualizarEstadoPedido,
   fetchFinanzas,
@@ -15,7 +18,7 @@ import {
 const AdminDataContext = createContext();
 
 export function AdminDataProvider({ children }) {
-  const { categorias } = useMenu();
+  const { categorias, setCategorias } = useMenu();
   const [products, setProducts] = useState([]);
   const [orders, setOrders] = useState([]);
   const [finances, setFinances] = useState([]);
@@ -81,6 +84,49 @@ export function AdminDataProvider({ children }) {
     }
     cargar();
   }, []);
+
+  // Categories CRUD
+  const addCategory = useCallback(async (category) => {
+    const dbCat = {
+      id: category.id,
+      nombre: category.name,
+      descripcion: category.description || "",
+      imagen: category.image || "",
+      orden: category.sortOrder || 0,
+    };
+    const created = await crearCategoria(dbCat);
+    setCategorias((prev) => [...prev, {
+      id: created.id,
+      name: created.nombre,
+      description: created.descripcion,
+      image: created.imagen,
+      sortOrder: created.orden,
+    }]);
+  }, [setCategorias]);
+
+  const updateCategory = useCallback(async (id, data) => {
+    const dbData = {};
+    if (data.name !== undefined) dbData.nombre = data.name;
+    if (data.description !== undefined) dbData.descripcion = data.description;
+    if (data.image !== undefined) dbData.imagen = data.image;
+    if (data.sortOrder !== undefined) dbData.orden = data.sortOrder;
+
+    const updated = await actualizarCategoria(id, dbData);
+    setCategorias((prev) =>
+      prev.map((c) => c.id === id ? {
+        id: updated.id,
+        name: updated.nombre,
+        description: updated.descripcion,
+        image: updated.imagen,
+        sortOrder: updated.orden,
+      } : c)
+    );
+  }, [setCategorias]);
+
+  const deleteCategory = useCallback(async (id) => {
+    await eliminarCategoria(id);
+    setCategorias((prev) => prev.filter((c) => c.id !== id));
+  }, [setCategorias]);
 
   // Products CRUD
   const addProduct = useCallback(async (product) => {
@@ -274,6 +320,7 @@ export function AdminDataProvider({ children }) {
   return (
     <AdminDataContext.Provider
       value={{
+        addCategory, updateCategory, deleteCategory,
         products, addProduct, updateProduct, deleteProduct,
         orders, updateOrderStatus, refreshOrders,
         finances, addFinanceEntry, deleteFinanceEntry,

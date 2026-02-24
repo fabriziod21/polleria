@@ -1,11 +1,12 @@
 import { Link, useLocation } from "react-router-dom";
-import { LayoutDashboard, ClipboardList, Package, DollarSign, ExternalLink, LogOut, Sandwich } from "lucide-react";
+import { LayoutDashboard, ClipboardList, FolderOpen, Package, DollarSign, ExternalLink, LogOut, Sandwich } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { useAdminAuth } from "@/context/AdminAuthContext";
 
 const navItems = [
   { to: "/admin/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { to: "/admin/pedidos", label: "Pedidos", icon: ClipboardList },
+  { to: "/admin/categorias", label: "Categorías", icon: FolderOpen },
   { to: "/admin/productos", label: "Productos", icon: Package },
   { to: "/admin/finanzas", label: "Finanzas", icon: DollarSign },
 ];

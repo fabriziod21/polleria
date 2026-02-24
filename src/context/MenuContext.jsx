@@ -104,6 +104,7 @@ export function MenuProvider({ children }) {
     <MenuContext.Provider
       value={{
         categorias,
+        setCategorias,
         productos,
         salsas,
         extras,

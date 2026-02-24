@@ -12,6 +12,7 @@ import AdminLoginPage from "@/pages/admin/AdminLoginPage";
 import DashboardPage from "@/pages/admin/DashboardPage";
 import PedidosPage from "@/pages/admin/PedidosPage";
 import ProductosPage from "@/pages/admin/ProductosPage";
+import CategoriasPage from "@/pages/admin/CategoriasPage";
 import FinanzasPage from "@/pages/admin/FinanzasPage";
 
 function App() {
@@ -37,6 +38,7 @@ function App() {
                 <Route element={<AdminLayout />}>
                   <Route path="/admin/dashboard" element={<DashboardPage />} />
                   <Route path="/admin/pedidos" element={<PedidosPage />} />
+                  <Route path="/admin/categorias" element={<CategoriasPage />} />
                   <Route path="/admin/productos" element={<ProductosPage />} />
                   <Route path="/admin/finanzas" element={<FinanzasPage />} />
                 </Route>

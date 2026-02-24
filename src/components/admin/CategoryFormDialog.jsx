@@ -4,40 +4,35 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Upload } from "lucide-react";
-import { useMenu } from "@/context/MenuContext";
 import { subirImagen } from "@/lib/database";
 
-const emptyProduct = {
+const emptyCategory = {
+  id: "",
   name: "",
-  categoryId: "",
   description: "",
-  price: "",
   image: "",
-  hasSalsas: false,
-  hasExtras: false,
-  hasBebidas: false,
+  sortOrder: 0,
 };
 
-export default function ProductFormDialog({ open, onClose, product, onSave }) {
-  const { categorias } = useMenu();
-  const [form, setForm] = useState(emptyProduct);
+export default function CategoryFormDialog({ open, onClose, category, onSave }) {
+  const [form, setForm] = useState(emptyCategory);
   const [uploading, setUploading] = useState(false);
 
   useEffect(() => {
-    if (product) {
-      setForm({ ...product, price: String(product.price) });
+    if (category) {
+      setForm({ ...category, sortOrder: category.sortOrder ?? 0 });
     } else {
-      setForm(emptyProduct);
+      setForm(emptyCategory);
     }
-  }, [product, open]);
+  }, [category, open]);
 
   const handleSubmit = (e) => {
     e.preventDefault();
     onSave({
       ...form,
-      price: parseFloat(form.price) || 0,
+      id: form.id || form.name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/-+$/, ""),
+      sortOrder: parseInt(form.sortOrder) || 0,
     });
     onClose();
   };
@@ -64,9 +59,22 @@ export default function ProductFormDialog({ open, onClose, product, onSave }) {
     <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
       <DialogContent className="bg-zinc-900 border-zinc-800 text-white max-w-md">
         <DialogHeader>
-          <DialogTitle>{product ? "Editar Producto" : "Nuevo Producto"}</DialogTitle>
+          <DialogTitle>{category ? "Editar Categoría" : "Nueva Categoría"}</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
+          {!category && (
+            <div className="space-y-2">
+              <Label className="text-gray-400">ID (slug)</Label>
+              <Input
+                value={form.id}
+                onChange={(e) => update("id", e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ""))}
+                className="bg-zinc-800 border-zinc-700 text-white"
+                placeholder="ej: sanguchos, hamburguesas"
+              />
+              <p className="text-xs text-gray-500">Se genera automáticamente si lo dejás vacío</p>
+            </div>
+          )}
+
           <div className="space-y-2">
             <Label className="text-gray-400">Nombre</Label>
             <Input
@@ -75,22 +83,6 @@ export default function ProductFormDialog({ open, onClose, product, onSave }) {
               className="bg-zinc-800 border-zinc-700 text-white"
               required
             />
-          </div>
-
-          <div className="space-y-2">
-            <Label className="text-gray-400">Categoría</Label>
-            <Select value={form.categoryId} onValueChange={(v) => update("categoryId", v)}>
-              <SelectTrigger className="bg-zinc-800 border-zinc-700 text-white">
-                <SelectValue placeholder="Seleccionar..." />
-              </SelectTrigger>
-              <SelectContent className="bg-zinc-900 border-zinc-700">
-                {categorias.map((cat) => (
-                  <SelectItem key={cat.id} value={cat.id} className="text-white">
-                    {cat.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
           </div>
 
           <div className="space-y-2">
@@ -104,14 +96,12 @@ export default function ProductFormDialog({ open, onClose, product, onSave }) {
           </div>
 
           <div className="space-y-2">
-            <Label className="text-gray-400">Precio (S/)</Label>
+            <Label className="text-gray-400">Orden</Label>
             <Input
               type="number"
-              step="0.1"
-              value={form.price}
-              onChange={(e) => update("price", e.target.value)}
-              className="bg-zinc-800 border-zinc-700 text-white"
-              required
+              value={form.sortOrder}
+              onChange={(e) => update("sortOrder", e.target.value)}
+              className="bg-zinc-800 border-zinc-700 text-white w-24"
             />
           </div>
 
@@ -156,30 +146,12 @@ export default function ProductFormDialog({ open, onClose, product, onSave }) {
             )}
           </div>
 
-          <div className="flex flex-wrap gap-4">
-            {[
-              { key: "hasSalsas", label: "Salsas" },
-              { key: "hasExtras", label: "Extras" },
-              { key: "hasBebidas", label: "Bebidas" },
-            ].map(({ key, label }) => (
-              <label key={key} className="flex items-center gap-2 text-sm text-gray-400 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={form[key]}
-                  onChange={(e) => update(key, e.target.checked)}
-                  className="rounded border-zinc-600 bg-zinc-800 text-red-600 focus:ring-red-500"
-                />
-                {label}
-              </label>
-            ))}
-          </div>
-
           <div className="flex gap-3 pt-2">
             <Button type="button" variant="ghost" onClick={onClose} className="flex-1 text-gray-400 hover:text-white">
               Cancelar
             </Button>
             <Button type="submit" disabled={uploading} className="flex-1 bg-red-600 hover:bg-red-700 text-white disabled:opacity-50">
-              {product ? "Guardar" : "Crear"}
+              {category ? "Guardar" : "Crear"}
             </Button>
           </div>
         </form>

@@ -6,6 +6,7 @@ import { useAdminAuth } from "@/context/AdminAuthContext";
 const pageNames = {
   "/admin/dashboard": "Dashboard",
   "/admin/pedidos": "Pedidos",
+  "/admin/categorias": "Categorías",
   "/admin/productos": "Productos",
   "/admin/finanzas": "Finanzas",
 };
