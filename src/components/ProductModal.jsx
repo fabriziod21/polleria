@@ -21,6 +21,20 @@ export default function ProductModal({ product, open, onClose, editingCartItem, 
   const [showExtras, setShowExtras] = useState(true);
   const [showBebidas, setShowBebidas] = useState(true);
 
+  // Filter catalog items to only those assigned to this product
+  const productSalsas = useMemo(
+    () => product?.salsasIds?.length > 0 ? salsas.filter((s) => product.salsasIds.includes(s.id)) : [],
+    [salsas, product?.salsasIds]
+  );
+  const productExtras = useMemo(
+    () => product?.extrasIds?.length > 0 ? extras.filter((e) => product.extrasIds.includes(e.id)) : [],
+    [extras, product?.extrasIds]
+  );
+  const productBebidas = useMemo(
+    () => product?.bebidasIds?.length > 0 ? bebidas.filter((b) => product.bebidasIds.includes(b.id)) : [],
+    [bebidas, product?.bebidasIds]
+  );
+
   // Pre-populate when editing
   useEffect(() => {
     if (editingCartItem && open) {
@@ -155,7 +169,7 @@ export default function ProductModal({ product, open, onClose, editingCartItem, 
                       className="overflow-hidden"
                     >
                       <div className="mt-3 space-y-2">
-                        {salsas.map((salsa) => {
+                        {productSalsas.map((salsa) => {
                           const selected = selectedSalsas.includes(salsa.id);
                           return (
                             <button
@@ -226,7 +240,7 @@ export default function ProductModal({ product, open, onClose, editingCartItem, 
                       className="overflow-hidden"
                     >
                       <div className="mt-3 space-y-2">
-                        {bebidas.map((bebida) => {
+                        {productBebidas.map((bebida) => {
                           const selected = selectedBebidas.find((b) => b.id === bebida.id);
                           return (
                             <button
@@ -293,7 +307,7 @@ export default function ProductModal({ product, open, onClose, editingCartItem, 
                       className="overflow-hidden"
                     >
                       <div className="mt-3 space-y-2">
-                        {extras.map((extra) => {
+                        {productExtras.map((extra) => {
                           const selected = selectedExtras.find((e) => e.id === extra.id);
                           return (
                             <button

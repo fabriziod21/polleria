@@ -1,27 +1,29 @@
 import { useState, useMemo } from "react";
-import { Plus, Trash2, TrendingUp, TrendingDown, DollarSign } from "lucide-react";
+import { Plus, Trash2, TrendingUp, TrendingDown, DollarSign, Calendar } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from "recharts";
+import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts";
 import StatCard from "@/components/admin/StatCard";
 import FinanceEntryDialog from "@/components/admin/FinanceEntryDialog";
 import { useAdminData } from "@/context/AdminDataContext";
+import { useAdminTheme } from "@/context/AdminThemeContext";
 
-const PIE_COLORS = ["#dc2626", "#2563eb", "#16a34a", "#eab308"];
-
-const chartTooltipStyle = {
-  backgroundColor: "#18181b",
-  border: "1px solid #27272a",
-  borderRadius: "8px",
-  color: "#fff",
-  fontSize: "12px",
-};
+const PIE_COLORS = ["#dc2626", "#2563eb", "#16a34a", "#eab308", "#8b5cf6", "#ec4899"];
 
 export default function FinanzasPage() {
   const { finances, addFinanceEntry, deleteFinanceEntry, financeSummary } = useAdminData();
+  const { isDark } = useAdminTheme();
   const [dialogOpen, setDialogOpen] = useState(false);
+
+  const chartTooltipStyle = {
+    backgroundColor: isDark ? "#18181b" : "#ffffff",
+    border: `1px solid ${isDark ? "#3f3f46" : "#e5e7eb"}`,
+    borderRadius: "12px",
+    color: isDark ? "#fff" : "#18181b",
+    fontSize: "12px",
+    padding: "8px 12px",
+    boxShadow: isDark ? "0 4px 12px rgba(0,0,0,0.4)" : "0 4px 12px rgba(0,0,0,0.1)",
+  };
 
   const pieData = useMemo(() => {
     const grouped = {};
@@ -36,23 +38,15 @@ export default function FinanzasPage() {
 
   const formatDate = (dateStr) => {
     const d = new Date(dateStr + "T00:00:00");
-    return d.toLocaleDateString("es-PE", { day: "2-digit", month: "short", year: "numeric" });
+    return d.toLocaleDateString("es-PE", { day: "2-digit", month: "short" });
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
       {/* Stats */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <StatCard
-          title="Total Entradas"
-          value={`S/${financeSummary.totalEntradas.toFixed(2)}`}
-          icon={TrendingUp}
-        />
-        <StatCard
-          title="Total Salidas"
-          value={`S/${financeSummary.totalSalidas.toFixed(2)}`}
-          icon={TrendingDown}
-        />
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        <StatCard title="Total Entradas" value={`S/${financeSummary.totalEntradas.toFixed(2)}`} icon={TrendingUp} />
+        <StatCard title="Total Salidas" value={`S/${financeSummary.totalSalidas.toFixed(2)}`} icon={TrendingDown} />
         <StatCard
           title="Balance"
           value={`S/${financeSummary.balance.toFixed(2)}`}
@@ -61,26 +55,24 @@ export default function FinanzasPage() {
         />
       </div>
 
-      {/* Chart + Add Button */}
+      {/* Chart + Add */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <Card className="bg-zinc-900 border-zinc-800">
-          <CardHeader>
-            <CardTitle className="text-sm font-medium text-gray-400">Distribución por Categoría</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="h-64">
+        <div className="bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800/60 rounded-2xl p-4 md:p-5">
+          <h3 className="text-sm font-semibold text-gray-500 dark:text-gray-400 mb-4">Distribución por Categoría</h3>
+          <div className="h-56 sm:h-64">
+            {pieData.length > 0 ? (
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
                   <Pie
                     data={pieData}
                     cx="50%"
                     cy="50%"
-                    innerRadius={50}
-                    outerRadius={90}
+                    innerRadius={45}
+                    outerRadius={85}
                     dataKey="value"
                     label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
                     labelLine={false}
-                    fontSize={11}
+                    fontSize={10}
                   >
                     {pieData.map((_, i) => (
                       <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />
@@ -89,114 +81,86 @@ export default function FinanzasPage() {
                   <Tooltip contentStyle={chartTooltipStyle} formatter={(v) => `S/${v.toFixed(2)}`} />
                 </PieChart>
               </ResponsiveContainer>
-            </div>
-          </CardContent>
-        </Card>
+            ) : (
+              <div className="h-full flex items-center justify-center text-gray-400 dark:text-gray-600 text-sm">
+                Sin datos
+              </div>
+            )}
+          </div>
+        </div>
 
-        <Card className="bg-zinc-900 border-zinc-800 flex flex-col items-center justify-center p-8 text-center">
-          <DollarSign className="w-12 h-12 text-red-500/30 mb-4" />
-          <h3 className="text-white font-bold text-lg mb-2">Registrar Movimiento</h3>
-          <p className="text-gray-500 text-sm mb-4">Agrega entradas (ventas) o salidas (gastos)</p>
-          <Button
-            onClick={() => setDialogOpen(true)}
-            className="bg-red-600 hover:bg-red-700 text-white"
-          >
+        <div className="bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800/60 rounded-2xl flex flex-col items-center justify-center p-8 text-center">
+          <div className="w-16 h-16 rounded-2xl bg-gray-100 dark:bg-zinc-800 flex items-center justify-center mb-4">
+            <DollarSign className="w-7 h-7 text-gray-400" />
+          </div>
+          <h3 className="text-zinc-900 dark:text-white font-bold text-lg mb-1">Registrar Movimiento</h3>
+          <p className="text-gray-500 text-sm mb-5">Agrega entradas o salidas</p>
+          <Button onClick={() => setDialogOpen(true)} className="bg-zinc-900 dark:bg-white hover:bg-zinc-800 dark:hover:bg-gray-200 text-white dark:text-zinc-900 rounded-xl font-semibold">
             <Plus className="w-4 h-4 mr-2" />
             Nuevo Registro
           </Button>
-        </Card>
+        </div>
       </div>
 
-      {/* Table */}
-      <Card className="bg-zinc-900 border-zinc-800">
-        <CardHeader>
-          <CardTitle className="text-sm font-medium text-gray-400">Historial de Movimientos</CardTitle>
-        </CardHeader>
-        <CardContent className="p-0">
-          {/* Desktop */}
-          <div className="hidden md:block">
-            <Table>
-              <TableHeader>
-                <TableRow className="border-zinc-800 hover:bg-transparent">
-                  <TableHead className="text-gray-500">Fecha</TableHead>
-                  <TableHead className="text-gray-500">Tipo</TableHead>
-                  <TableHead className="text-gray-500">Categoría</TableHead>
-                  <TableHead className="text-gray-500">Descripción</TableHead>
-                  <TableHead className="text-gray-500 text-right">Monto</TableHead>
-                  <TableHead className="text-gray-500 w-12"></TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {finances.map((entry) => (
-                  <TableRow key={entry.id} className="border-zinc-800">
-                    <TableCell className="text-sm text-gray-400">{formatDate(entry.fecha)}</TableCell>
-                    <TableCell>
-                      <Badge
-                        className={
-                          entry.tipo === "entrada"
-                            ? "bg-green-500/20 text-green-400 border-green-500/30 border text-[11px]"
-                            : "bg-red-500/20 text-red-400 border-red-500/30 border text-[11px]"
-                        }
-                      >
-                        {entry.tipo === "entrada" ? "Entrada" : "Salida"}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="text-sm text-gray-400 capitalize">{entry.categoria}</TableCell>
-                    <TableCell className="text-sm text-white">{entry.descripcion}</TableCell>
-                    <TableCell
-                      className={`text-right font-bold text-sm ${
-                        entry.tipo === "entrada" ? "text-green-400" : "text-red-400"
-                      }`}
-                    >
-                      {entry.tipo === "entrada" ? "+" : "-"}S/{entry.monto.toFixed(2)}
-                    </TableCell>
-                    <TableCell>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8 text-gray-500 hover:text-red-400 hover:bg-red-600/10"
-                        onClick={() => deleteFinanceEntry(entry.id)}
-                      >
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
+      {/* History */}
+      <div className="bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800/60 rounded-2xl">
+        <div className="p-4 md:p-5 pb-0 md:pb-0">
+          <h3 className="text-sm font-semibold text-gray-500 dark:text-gray-400">Historial de Movimientos</h3>
+        </div>
 
-          {/* Mobile */}
-          <div className="md:hidden p-3 space-y-3">
+        {finances.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-12 text-gray-400 dark:text-gray-600">
+            <Calendar className="w-10 h-10 mb-2 opacity-30" />
+            <p className="text-sm">No hay movimientos registrados</p>
+          </div>
+        ) : (
+          <div className="p-4 md:p-5 space-y-1">
             {finances.map((entry) => (
-              <div key={entry.id} className="flex items-center justify-between py-2 border-b border-zinc-800 last:border-0">
+              <div
+                key={entry.id}
+                className="flex items-center gap-3 p-3 rounded-xl hover:bg-gray-50 dark:hover:bg-zinc-800/40 transition-colors"
+              >
+                {/* Type indicator */}
+                <div className={`w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 ${
+                  entry.tipo === "entrada" ? "bg-green-500/15" : "bg-red-500/15"
+                }`}>
+                  {entry.tipo === "entrada" ? (
+                    <TrendingUp className="w-4 h-4 text-green-400" />
+                  ) : (
+                    <TrendingDown className="w-4 h-4 text-red-400" />
+                  )}
+                </div>
+
+                {/* Info */}
                 <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 mb-0.5">
-                    <Badge
-                      className={
-                        entry.tipo === "entrada"
-                          ? "bg-green-500/20 text-green-400 border-green-500/30 border text-[10px]"
-                          : "bg-red-500/20 text-red-400 border-red-500/30 border text-[10px]"
-                      }
-                    >
+                  <div className="flex items-center gap-2 mb-0.5 flex-wrap">
+                    <p className="text-sm font-medium text-zinc-900 dark:text-white truncate">{entry.descripcion}</p>
+                    <Badge className={`text-[10px] border ${
+                      entry.tipo === "entrada"
+                        ? "bg-green-500/15 text-green-400 border-green-500/20"
+                        : "bg-red-500/15 text-red-400 border-red-500/20"
+                    }`}>
                       {entry.tipo === "entrada" ? "Entrada" : "Salida"}
                     </Badge>
-                    <span className="text-xs text-gray-500">{formatDate(entry.fecha)}</span>
                   </div>
-                  <p className="text-sm text-white truncate">{entry.descripcion}</p>
+                  <div className="flex items-center gap-2 text-xs text-gray-500">
+                    <span>{formatDate(entry.fecha)}</span>
+                    <span>·</span>
+                    <span className="capitalize">{entry.categoria}</span>
+                  </div>
                 </div>
-                <div className="flex items-center gap-2 ml-3">
-                  <span
-                    className={`text-sm font-bold ${
-                      entry.tipo === "entrada" ? "text-green-400" : "text-red-400"
-                    }`}
-                  >
+
+                {/* Amount + Delete */}
+                <div className="flex items-center gap-2 flex-shrink-0">
+                  <span className={`text-sm font-bold tabular-nums ${
+                    entry.tipo === "entrada" ? "text-green-400" : "text-red-400"
+                  }`}>
                     {entry.tipo === "entrada" ? "+" : "-"}S/{entry.monto.toFixed(2)}
                   </span>
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="h-7 w-7 text-gray-600 hover:text-red-400"
+                    className="h-7 w-7 text-gray-400 dark:text-gray-600 hover:text-red-400 hover:bg-red-600/10 rounded-lg"
                     onClick={() => deleteFinanceEntry(entry.id)}
                   >
                     <Trash2 className="w-3 h-3" />
@@ -205,8 +169,8 @@ export default function FinanzasPage() {
               </div>
             ))}
           </div>
-        </CardContent>
-      </Card>
+        )}
+      </div>
 
       <FinanceEntryDialog
         open={dialogOpen}

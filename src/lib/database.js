@@ -13,20 +13,20 @@ export async function fetchCategorias() {
   return data;
 }
 
-export async function crearCategoria(categoria) {
+export async function crearCategoria(categoria, usuario) {
   const { data, error } = await supabase
     .from("categorias")
-    .insert(categoria)
+    .insert({ ...categoria, usuario_registro: usuario || null })
     .select()
     .single();
   if (error) throw error;
   return data;
 }
 
-export async function actualizarCategoria(id, datos) {
+export async function actualizarCategoria(id, datos, usuario) {
   const { data, error } = await supabase
     .from("categorias")
-    .update({ ...datos, fecha_actualizacion: new Date().toISOString() })
+    .update({ ...datos, usuario_actualizacion: usuario || null })
     .eq("id", id)
     .select()
     .single();
@@ -34,10 +34,10 @@ export async function actualizarCategoria(id, datos) {
   return data;
 }
 
-export async function eliminarCategoria(id) {
+export async function eliminarCategoria(id, usuario) {
   const { error } = await supabase
     .from("categorias")
-    .update({ estado_registro: 0, fecha_actualizacion: new Date().toISOString() })
+    .update({ estado_registro: 0, usuario_actualizacion: usuario || null })
     .eq("id", id);
   if (error) throw error;
 }
@@ -51,6 +51,7 @@ export async function fetchProductos() {
     .select("*")
     .eq("estado_registro", 1)
     .eq("activo", true)
+    .eq("es_visible", true)
     .order("id");
   if (error) throw error;
   return data;
@@ -79,20 +80,20 @@ export async function fetchProductosAdmin() {
   return data;
 }
 
-export async function crearProducto(producto) {
+export async function crearProducto(producto, usuario) {
   const { data, error } = await supabase
     .from("productos")
-    .insert(producto)
+    .insert({ ...producto, usuario_registro: usuario || null })
     .select()
     .single();
   if (error) throw error;
   return data;
 }
 
-export async function actualizarProducto(id, datos) {
+export async function actualizarProducto(id, datos, usuario) {
   const { data, error } = await supabase
     .from("productos")
-    .update({ ...datos, fecha_actualizacion: new Date().toISOString() })
+    .update({ ...datos, usuario_actualizacion: usuario || null })
     .eq("id", id)
     .select()
     .single();
@@ -100,10 +101,10 @@ export async function actualizarProducto(id, datos) {
   return data;
 }
 
-export async function eliminarProducto(id) {
+export async function eliminarProducto(id, usuario) {
   const { error } = await supabase
     .from("productos")
-    .update({ estado_registro: 0, fecha_actualizacion: new Date().toISOString() })
+    .update({ estado_registro: 0, usuario_actualizacion: usuario || null })
     .eq("id", id);
   if (error) throw error;
 }
@@ -120,6 +121,35 @@ export async function fetchSalsas() {
   return data;
 }
 
+export async function crearSalsa(salsa, usuario) {
+  const { data, error } = await supabase
+    .from("salsas")
+    .insert({ ...salsa, usuario_registro: usuario || null })
+    .select()
+    .single();
+  if (error) throw error;
+  return data;
+}
+
+export async function actualizarSalsa(id, datos, usuario) {
+  const { data, error } = await supabase
+    .from("salsas")
+    .update({ ...datos, usuario_actualizacion: usuario || null })
+    .eq("id", id)
+    .select()
+    .single();
+  if (error) throw error;
+  return data;
+}
+
+export async function eliminarSalsa(id, usuario) {
+  const { error } = await supabase
+    .from("salsas")
+    .update({ estado_registro: 0, usuario_actualizacion: usuario || null })
+    .eq("id", id);
+  if (error) throw error;
+}
+
 export async function fetchExtras() {
   const { data, error } = await supabase
     .from("extras")
@@ -127,6 +157,35 @@ export async function fetchExtras() {
     .eq("estado_registro", 1);
   if (error) throw error;
   return data;
+}
+
+export async function crearExtra(extra, usuario) {
+  const { data, error } = await supabase
+    .from("extras")
+    .insert({ ...extra, usuario_registro: usuario || null })
+    .select()
+    .single();
+  if (error) throw error;
+  return data;
+}
+
+export async function actualizarExtra(id, datos, usuario) {
+  const { data, error } = await supabase
+    .from("extras")
+    .update({ ...datos, usuario_actualizacion: usuario || null })
+    .eq("id", id)
+    .select()
+    .single();
+  if (error) throw error;
+  return data;
+}
+
+export async function eliminarExtra(id, usuario) {
+  const { error } = await supabase
+    .from("extras")
+    .update({ estado_registro: 0, usuario_actualizacion: usuario || null })
+    .eq("id", id);
+  if (error) throw error;
 }
 
 export async function fetchBebidas() {
@@ -138,14 +197,43 @@ export async function fetchBebidas() {
   return data;
 }
 
+export async function crearBebida(bebida, usuario) {
+  const { data, error } = await supabase
+    .from("bebidas")
+    .insert({ ...bebida, usuario_registro: usuario || null })
+    .select()
+    .single();
+  if (error) throw error;
+  return data;
+}
+
+export async function actualizarBebida(id, datos, usuario) {
+  const { data, error } = await supabase
+    .from("bebidas")
+    .update({ ...datos, usuario_actualizacion: usuario || null })
+    .eq("id", id)
+    .select()
+    .single();
+  if (error) throw error;
+  return data;
+}
+
+export async function eliminarBebida(id, usuario) {
+  const { error } = await supabase
+    .from("bebidas")
+    .update({ estado_registro: 0, usuario_actualizacion: usuario || null })
+    .eq("id", id);
+  if (error) throw error;
+}
+
 // ============================================
 // PEDIDOS
 // ============================================
-export async function crearPedido(pedido, items) {
+export async function crearPedido(pedido, items, usuario) {
   // Insertar pedido
   const { data: pedidoData, error: pedidoError } = await supabase
     .from("pedidos")
-    .insert(pedido)
+    .insert({ ...pedido, usuario_registro: usuario || null })
     .select()
     .single();
   if (pedidoError) throw pedidoError;
@@ -160,6 +248,7 @@ export async function crearPedido(pedido, items) {
     salsas_seleccionadas: item.salsas_seleccionadas || [],
     extras_seleccionados: item.extras_seleccionados || [],
     bebidas_seleccionadas: item.bebidas_seleccionadas || [],
+    usuario_registro: usuario || null,
   }));
 
   const { error: detalleError } = await supabase
@@ -183,10 +272,10 @@ export async function fetchPedidos() {
   return data;
 }
 
-export async function actualizarEstadoPedido(id, estado) {
+export async function actualizarEstadoPedido(id, estado, usuario) {
   const { error } = await supabase
     .from("pedidos")
-    .update({ estado, fecha_actualizacion: new Date().toISOString() })
+    .update({ estado, usuario_actualizacion: usuario || null })
     .eq("id", id);
   if (error) throw error;
 }
@@ -204,20 +293,20 @@ export async function fetchFinanzas() {
   return data;
 }
 
-export async function crearFinanza(finanza) {
+export async function crearFinanza(finanza, usuario) {
   const { data, error } = await supabase
     .from("finanzas")
-    .insert(finanza)
+    .insert({ ...finanza, usuario_registro: usuario || null })
     .select()
     .single();
   if (error) throw error;
   return data;
 }
 
-export async function eliminarFinanza(id) {
+export async function eliminarFinanza(id, usuario) {
   const { error } = await supabase
     .from("finanzas")
-    .update({ estado_registro: 0, fecha_actualizacion: new Date().toISOString() })
+    .update({ estado_registro: 0, usuario_actualizacion: usuario || null })
     .eq("id", id);
   if (error) throw error;
 }
@@ -239,6 +328,57 @@ export async function subirImagen(file) {
     .getPublicUrl(fileName);
 
   return data.publicUrl;
+}
+
+// ============================================
+// CLIENTES (usuarios con tipo_usuario_id = 2)
+// ============================================
+export async function fetchClientes() {
+  const { data, error } = await supabase
+    .from("usuarios")
+    .select("*")
+    .eq("tipo_usuario_id", 2)
+    .eq("estado_registro", 1)
+    .order("id");
+  if (error) throw error;
+  return data;
+}
+
+export async function crearCliente(cliente, usuario) {
+  const { data, error } = await supabase
+    .from("usuarios")
+    .insert({ ...cliente, tipo_usuario_id: 2, usuario_registro: usuario || null })
+    .select()
+    .single();
+  if (error) throw error;
+  return data;
+}
+
+export async function actualizarCliente(id, datos, usuario) {
+  const { data, error } = await supabase
+    .from("usuarios")
+    .update({ ...datos, usuario_actualizacion: usuario || null })
+    .eq("id", id)
+    .select()
+    .single();
+  if (error) throw error;
+  return data;
+}
+
+export async function eliminarCliente(id, usuario) {
+  const { error } = await supabase
+    .from("usuarios")
+    .update({ estado_registro: 0, usuario_actualizacion: usuario || null })
+    .eq("id", id);
+  if (error) throw error;
+}
+
+export async function actualizarPedidoCliente(pedidoId, clienteId, usuario) {
+  const { error } = await supabase
+    .from("pedidos")
+    .update({ usuario_id: clienteId, usuario_actualizacion: usuario || null })
+    .eq("id", pedidoId);
+  if (error) throw error;
 }
 
 // ============================================

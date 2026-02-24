@@ -8,7 +8,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { Minus, Plus, Trash2, ShoppingBag, Pencil, Truck, Store, UtensilsCrossed, MapPin, MessageSquare } from "lucide-react";
+import { Minus, Plus, Trash2, ShoppingBag, Pencil, Truck, Store, UtensilsCrossed, MapPin, MessageSquare, Phone } from "lucide-react";
 import { useCart } from "@/context/CartContext";
 import { useMenu } from "@/context/MenuContext";
 import { restaurantInfo } from "@/data/menu";
@@ -29,6 +29,7 @@ export default function CartDrawer() {
   const { items, isOpen, setIsOpen, removeItem, updateQuantity, totalPrice, clearCart, setEditingItem } = useCart();
   const { salsas } = useMenu();
   const [tipoPedido, setTipoPedido] = useState("");
+  const [telefono, setTelefono] = useState("");
   const [direccion, setDireccion] = useState("");
   const [comentarios, setComentarios] = useState("");
   const [confirmingDelete, setConfirmingDelete] = useState(null);
@@ -57,6 +58,7 @@ export default function CartDrawer() {
         {
           id: pedidoId,
           tipo_pedido: tipoPedido,
+          telefono: telefono.trim() || null,
           direccion: tipoPedido === "delivery" ? direccion.trim() : null,
           comentarios: comentarios.trim() || null,
           total: totalPrice,
@@ -96,6 +98,7 @@ export default function CartDrawer() {
       .join("\n");
 
     let message = `🥪 *Nuevo Pedido - Sanguchería Mary*\n\n`;
+    message += `📱 *Tel:* ${telefono.trim()}\n`;
     message += `📋 *Tipo:* ${tipoLabels[tipoPedido]}\n`;
     if (tipoPedido === "delivery" && direccion.trim()) {
       message += `📍 *Dirección:* ${direccion.trim()}\n`;
@@ -115,11 +118,12 @@ export default function CartDrawer() {
   const handleClearCart = () => {
     clearCart();
     setTipoPedido("");
+    setTelefono("");
     setDireccion("");
     setComentarios("");
   };
 
-  const canSend = tipoPedido && (tipoPedido !== "delivery" || direccion.trim());
+  const canSend = tipoPedido && telefono.trim() && (tipoPedido !== "delivery" || direccion.trim());
 
   return (
     <Sheet open={isOpen} onOpenChange={setIsOpen}>
@@ -255,6 +259,21 @@ export default function CartDrawer() {
                     </button>
                   ))}
                 </div>
+              </div>
+
+              {/* Teléfono */}
+              <div className="space-y-2">
+                <Label className="text-white text-xs font-semibold uppercase tracking-wide flex items-center gap-1">
+                  <Phone className="w-3 h-3" />
+                  Tu numero de telefono *
+                </Label>
+                <Input
+                  type="tel"
+                  placeholder="Ej: 946792798"
+                  value={telefono}
+                  onChange={(e) => setTelefono(e.target.value.replace(/[^0-9+\s-]/g, ""))}
+                  className="bg-zinc-900 border-zinc-800 text-white placeholder:text-gray-600 focus:border-red-500/50"
+                />
               </div>
 
               {/* Direccion - Solo para delivery */}

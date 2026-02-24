@@ -13,7 +13,10 @@ import DashboardPage from "@/pages/admin/DashboardPage";
 import PedidosPage from "@/pages/admin/PedidosPage";
 import ProductosPage from "@/pages/admin/ProductosPage";
 import CategoriasPage from "@/pages/admin/CategoriasPage";
+import ComplementosPage from "@/pages/admin/ComplementosPage";
 import FinanzasPage from "@/pages/admin/FinanzasPage";
+import ClientesPage from "@/pages/admin/ClientesPage";
+import POSPage from "@/pages/admin/POSPage";
 
 function App() {
   return (
@@ -40,7 +43,10 @@ function App() {
                   <Route path="/admin/pedidos" element={<PedidosPage />} />
                   <Route path="/admin/categorias" element={<CategoriasPage />} />
                   <Route path="/admin/productos" element={<ProductosPage />} />
+                  <Route path="/admin/complementos" element={<ComplementosPage />} />
                   <Route path="/admin/finanzas" element={<FinanzasPage />} />
+                  <Route path="/admin/clientes" element={<ClientesPage />} />
+                  <Route path="/admin/pos" element={<POSPage />} />
                 </Route>
               </Route>
             </Routes>

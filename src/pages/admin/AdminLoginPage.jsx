@@ -40,28 +40,28 @@ export default function AdminLoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-zinc-950 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gray-50 dark:bg-zinc-950 flex items-center justify-center p-4">
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
         className="w-full max-w-sm"
       >
-        <Card className="bg-zinc-900 border-zinc-800">
+        <Card className="bg-white dark:bg-zinc-900 border-gray-200 dark:border-zinc-800">
           <CardContent className="pt-8 pb-8 px-6">
             {/* Logo */}
             <div className="text-center mb-8">
               <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-red-600/20 mb-4">
                 <Sandwich className="w-8 h-8 text-red-500" />
               </div>
-              <h1 className="text-xl font-bold text-white">Sanguchería Mary</h1>
+              <h1 className="text-xl font-bold text-zinc-900 dark:text-white">Sanguchería Mary</h1>
               <p className="text-sm text-gray-500 mt-1">Panel de Administración</p>
             </div>
 
             {/* Form */}
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-2">
-                <label className="text-sm text-gray-400 flex items-center gap-2">
+                <label className="text-sm text-gray-500 dark:text-gray-400 flex items-center gap-2">
                   <Mail className="w-3.5 h-3.5" />
                   Email
                 </label>
@@ -70,14 +70,14 @@ export default function AdminLoginPage() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="admin@sangucheriamary.com"
-                  className="bg-zinc-800 border-zinc-700 text-white placeholder:text-gray-600"
+                  className="bg-gray-50 dark:bg-zinc-800 border-gray-300 dark:border-zinc-700 text-zinc-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-600"
                   required
                   autoFocus
                 />
               </div>
 
               <div className="space-y-2">
-                <label className="text-sm text-gray-400 flex items-center gap-2">
+                <label className="text-sm text-gray-500 dark:text-gray-400 flex items-center gap-2">
                   <Lock className="w-3.5 h-3.5" />
                   Contraseña
                 </label>
@@ -91,7 +91,7 @@ export default function AdminLoginPage() {
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
                       placeholder="Ingresa la contraseña"
-                      className={`bg-zinc-800 border-zinc-700 text-white placeholder:text-gray-600 pr-10 ${
+                      className={`bg-gray-50 dark:bg-zinc-800 border-gray-300 dark:border-zinc-700 text-zinc-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-600 pr-10 ${
                         error ? "border-red-500 focus-visible:ring-red-500" : "focus-visible:ring-red-500/50"
                       }`}
                       required
@@ -99,7 +99,7 @@ export default function AdminLoginPage() {
                     <button
                       type="button"
                       onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-300"
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
                     >
                       {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                     </button>

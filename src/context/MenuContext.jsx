@@ -33,18 +33,26 @@ export function MenuProvider({ children }) {
           sortOrder: c.orden,
         })));
 
-        setProductos(prods.map((p) => ({
-          id: p.id,
-          categoryId: p.categoria_id,
-          name: p.nombre,
-          description: p.descripcion,
-          price: Number(p.precio),
-          image: p.imagen,
-          hasSalsas: p.tiene_salsas,
-          hasExtras: p.tiene_extras,
-          hasBebidas: p.tiene_bebidas,
-          active: p.activo,
-        })));
+        setProductos(prods.map((p) => {
+          const salsasIds = p.salsas_ids || [];
+          const extrasIds = p.extras_ids || [];
+          const bebidasIds = p.bebidas_ids || [];
+          return {
+            id: p.id,
+            categoryId: p.categoria_id,
+            name: p.nombre,
+            description: p.descripcion,
+            price: Number(p.precio),
+            image: p.imagen,
+            salsasIds,
+            extrasIds,
+            bebidasIds,
+            hasSalsas: salsasIds.length > 0,
+            hasExtras: extrasIds.length > 0,
+            hasBebidas: bebidasIds.length > 0,
+            active: p.activo,
+          };
+        }));
 
         setSalsas(sals.map((s) => ({
           id: s.id,
@@ -63,6 +71,7 @@ export function MenuProvider({ children }) {
           id: b.id,
           name: b.nombre,
           price: Number(b.precio),
+          image: b.imagen,
         })));
 
         setError(null);
@@ -81,18 +90,26 @@ export function MenuProvider({ children }) {
     setCargando(true);
     try {
       const prods = await fetchProductos();
-      setProductos(prods.map((p) => ({
-        id: p.id,
-        categoryId: p.categoria_id,
-        name: p.nombre,
-        description: p.descripcion,
-        price: Number(p.precio),
-        image: p.imagen,
-        hasSalsas: p.tiene_salsas,
-        hasExtras: p.tiene_extras,
-        hasBebidas: p.tiene_bebidas,
-        active: p.activo,
-      })));
+      setProductos(prods.map((p) => {
+        const salsasIds = p.salsas_ids || [];
+        const extrasIds = p.extras_ids || [];
+        const bebidasIds = p.bebidas_ids || [];
+        return {
+          id: p.id,
+          categoryId: p.categoria_id,
+          name: p.nombre,
+          description: p.descripcion,
+          price: Number(p.precio),
+          image: p.imagen,
+          salsasIds,
+          extrasIds,
+          bebidasIds,
+          hasSalsas: salsasIds.length > 0,
+          hasExtras: extrasIds.length > 0,
+          hasBebidas: bebidasIds.length > 0,
+          active: p.activo,
+        };
+      }));
     } catch (err) {
       console.error("Error recargando productos:", err);
     } finally {
@@ -107,8 +124,11 @@ export function MenuProvider({ children }) {
         setCategorias,
         productos,
         salsas,
+        setSalsas,
         extras,
+        setExtras,
         bebidas,
+        setBebidas,
         cargando,
         error,
         recargar,

@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useCallback, useMemo, useEffect } from "react";
 import { useMenu } from "@/context/MenuContext";
+import { useAdminAuth } from "@/context/AdminAuthContext";
 import {
   fetchProductosAdmin,
   crearProducto,
@@ -8,52 +9,83 @@ import {
   crearCategoria,
   actualizarCategoria,
   eliminarCategoria,
+  crearSalsa,
+  actualizarSalsa,
+  eliminarSalsa,
+  crearExtra,
+  actualizarExtra,
+  eliminarExtra,
+  crearBebida,
+  actualizarBebida,
+  eliminarBebida,
   fetchPedidos,
   actualizarEstadoPedido,
+  actualizarPedidoCliente,
   fetchFinanzas,
   crearFinanza,
   eliminarFinanza,
+  fetchClientes,
+  crearCliente,
+  actualizarCliente,
+  eliminarCliente,
 } from "@/lib/database";
 
 const AdminDataContext = createContext();
 
 export function AdminDataProvider({ children }) {
-  const { categorias, setCategorias } = useMenu();
+  const { categorias, setCategorias, salsas, setSalsas, extras, setExtras, bebidas, setBebidas } = useMenu();
+  const { adminUser } = useAdminAuth();
   const [products, setProducts] = useState([]);
   const [orders, setOrders] = useState([]);
   const [finances, setFinances] = useState([]);
+  const [clients, setClients] = useState([]);
   const [loading, setLoading] = useState(true);
+
+  // Nombre del admin para auditoría
+  const auditUser = adminUser ? `${adminUser.nombre || ""} ${adminUser.apellido || ""}`.trim() || adminUser.email : null;
 
   // Cargar datos al montar
   useEffect(() => {
     async function cargar() {
       try {
         setLoading(true);
-        const [prods, ords, fins] = await Promise.all([
+        const [prods, ords, fins, clis] = await Promise.all([
           fetchProductosAdmin(),
           fetchPedidos().catch(() => []),
           fetchFinanzas().catch(() => []),
+          fetchClientes().catch(() => []),
         ]);
 
         // Mapear productos de BD a formato frontend
-        setProducts(prods.map((p) => ({
-          id: p.id,
-          categoryId: p.categoria_id,
-          name: p.nombre,
-          description: p.descripcion,
-          price: Number(p.precio),
-          image: p.imagen,
-          hasSalsas: p.tiene_salsas,
-          hasExtras: p.tiene_extras,
-          hasBebidas: p.tiene_bebidas,
-          active: p.activo,
-        })));
+        setProducts(prods.map((p) => {
+          const salsasIds = p.salsas_ids || [];
+          const extrasIds = p.extras_ids || [];
+          const bebidasIds = p.bebidas_ids || [];
+          return {
+            id: p.id,
+            categoryId: p.categoria_id,
+            name: p.nombre,
+            description: p.descripcion,
+            price: Number(p.precio),
+            image: p.imagen,
+            salsasIds,
+            extrasIds,
+            bebidasIds,
+            hasSalsas: salsasIds.length > 0,
+            hasExtras: extrasIds.length > 0,
+            hasBebidas: bebidasIds.length > 0,
+            active: p.activo,
+            visible: p.es_visible !== false,
+          };
+        }));
 
         // Mapear pedidos
         setOrders(ords.map((o) => ({
           id: o.id,
           fecha: o.fecha_registro,
           tipoPedido: o.tipo_pedido,
+          telefono: o.telefono || null,
+          clientId: o.usuario_id || null,
           direccion: o.direccion,
           comentarios: o.comentarios,
           total: Number(o.total),
@@ -76,6 +108,17 @@ export function AdminDataProvider({ children }) {
           descripcion: f.descripcion,
           monto: Number(f.monto),
         })));
+
+        // Mapear clientes
+        setClients(clis.map((c) => ({
+          id: c.id,
+          name: c.nombre,
+          lastName: c.apellido || "",
+          dni: c.dni || "",
+          email: c.email || "",
+          phone: c.telefono || "",
+          address: c.direccion || "",
+        })));
       } catch (err) {
         console.error("Error cargando datos admin:", err);
       } finally {
@@ -94,7 +137,7 @@ export function AdminDataProvider({ children }) {
       imagen: category.image || "",
       orden: category.sortOrder || 0,
     };
-    const created = await crearCategoria(dbCat);
+    const created = await crearCategoria(dbCat, auditUser);
     setCategorias((prev) => [...prev, {
       id: created.id,
       name: created.nombre,
@@ -102,7 +145,7 @@ export function AdminDataProvider({ children }) {
       image: created.imagen,
       sortOrder: created.orden,
     }]);
-  }, [setCategorias]);
+  }, [setCategorias, auditUser]);
 
   const updateCategory = useCallback(async (id, data) => {
     const dbData = {};
@@ -111,7 +154,7 @@ export function AdminDataProvider({ children }) {
     if (data.image !== undefined) dbData.imagen = data.image;
     if (data.sortOrder !== undefined) dbData.orden = data.sortOrder;
 
-    const updated = await actualizarCategoria(id, dbData);
+    const updated = await actualizarCategoria(id, dbData, auditUser);
     setCategorias((prev) =>
       prev.map((c) => c.id === id ? {
         id: updated.id,
@@ -121,12 +164,60 @@ export function AdminDataProvider({ children }) {
         sortOrder: updated.orden,
       } : c)
     );
-  }, [setCategorias]);
+  }, [setCategorias, auditUser]);
 
   const deleteCategory = useCallback(async (id) => {
-    await eliminarCategoria(id);
+    await eliminarCategoria(id, auditUser);
     setCategorias((prev) => prev.filter((c) => c.id !== id));
-  }, [setCategorias]);
+  }, [setCategorias, auditUser]);
+
+  // Salsas CRUD
+  const addSalsa = useCallback(async (salsa) => {
+    const created = await crearSalsa(salsa, auditUser);
+    setSalsas((prev) => [...prev, { id: created.id, name: created.nombre, image: created.imagen }]);
+  }, [setSalsas, auditUser]);
+
+  const updateSalsa = useCallback(async (id, datos) => {
+    const updated = await actualizarSalsa(id, datos, auditUser);
+    setSalsas((prev) => prev.map((s) => s.id === id ? { id: updated.id, name: updated.nombre, image: updated.imagen } : s));
+  }, [setSalsas, auditUser]);
+
+  const deleteSalsa = useCallback(async (id) => {
+    await eliminarSalsa(id, auditUser);
+    setSalsas((prev) => prev.filter((s) => s.id !== id));
+  }, [setSalsas, auditUser]);
+
+  // Extras CRUD
+  const addExtra = useCallback(async (extra) => {
+    const created = await crearExtra(extra, auditUser);
+    setExtras((prev) => [...prev, { id: created.id, name: created.nombre, price: Number(created.precio), image: created.imagen }]);
+  }, [setExtras, auditUser]);
+
+  const updateExtra = useCallback(async (id, datos) => {
+    const updated = await actualizarExtra(id, datos, auditUser);
+    setExtras((prev) => prev.map((e) => e.id === id ? { id: updated.id, name: updated.nombre, price: Number(updated.precio), image: updated.imagen } : e));
+  }, [setExtras, auditUser]);
+
+  const deleteExtra = useCallback(async (id) => {
+    await eliminarExtra(id, auditUser);
+    setExtras((prev) => prev.filter((e) => e.id !== id));
+  }, [setExtras, auditUser]);
+
+  // Bebidas CRUD
+  const addBebida = useCallback(async (bebida) => {
+    const created = await crearBebida(bebida, auditUser);
+    setBebidas((prev) => [...prev, { id: created.id, name: created.nombre, price: Number(created.precio), image: created.imagen }]);
+  }, [setBebidas, auditUser]);
+
+  const updateBebida = useCallback(async (id, datos) => {
+    const updated = await actualizarBebida(id, datos, auditUser);
+    setBebidas((prev) => prev.map((b) => b.id === id ? { id: updated.id, name: updated.nombre, price: Number(updated.precio), image: updated.imagen } : b));
+  }, [setBebidas, auditUser]);
+
+  const deleteBebida = useCallback(async (id) => {
+    await eliminarBebida(id, auditUser);
+    setBebidas((prev) => prev.filter((b) => b.id !== id));
+  }, [setBebidas, auditUser]);
 
   // Products CRUD
   const addProduct = useCallback(async (product) => {
@@ -136,11 +227,15 @@ export function AdminDataProvider({ children }) {
       descripcion: product.description,
       precio: parseFloat(product.price) || 0,
       imagen: product.image,
-      tiene_salsas: product.hasSalsas || false,
-      tiene_extras: product.hasExtras || false,
-      tiene_bebidas: product.hasBebidas || false,
+      salsas_ids: product.salsasIds || [],
+      extras_ids: product.extrasIds || [],
+      bebidas_ids: product.bebidasIds || [],
+      es_visible: product.visible !== false,
     };
-    const created = await crearProducto(dbProduct);
+    const created = await crearProducto(dbProduct, auditUser);
+    const salsasIds = created.salsas_ids || [];
+    const extrasIds = created.extras_ids || [];
+    const bebidasIds = created.bebidas_ids || [];
     setProducts((prev) => [...prev, {
       id: created.id,
       categoryId: created.categoria_id,
@@ -148,12 +243,16 @@ export function AdminDataProvider({ children }) {
       description: created.descripcion,
       price: Number(created.precio),
       image: created.imagen,
-      hasSalsas: created.tiene_salsas,
-      hasExtras: created.tiene_extras,
-      hasBebidas: created.tiene_bebidas,
+      salsasIds,
+      extrasIds,
+      bebidasIds,
+      hasSalsas: salsasIds.length > 0,
+      hasExtras: extrasIds.length > 0,
+      hasBebidas: bebidasIds.length > 0,
       active: created.activo,
+      visible: created.es_visible !== false,
     }]);
-  }, []);
+  }, [auditUser]);
 
   const updateProduct = useCallback(async (id, data) => {
     const dbData = {};
@@ -162,11 +261,15 @@ export function AdminDataProvider({ children }) {
     if (data.description !== undefined) dbData.descripcion = data.description;
     if (data.price !== undefined) dbData.precio = parseFloat(data.price) || 0;
     if (data.image !== undefined) dbData.imagen = data.image;
-    if (data.hasSalsas !== undefined) dbData.tiene_salsas = data.hasSalsas;
-    if (data.hasExtras !== undefined) dbData.tiene_extras = data.hasExtras;
-    if (data.hasBebidas !== undefined) dbData.tiene_bebidas = data.hasBebidas;
+    if (data.salsasIds !== undefined) dbData.salsas_ids = data.salsasIds;
+    if (data.extrasIds !== undefined) dbData.extras_ids = data.extrasIds;
+    if (data.bebidasIds !== undefined) dbData.bebidas_ids = data.bebidasIds;
+    if (data.visible !== undefined) dbData.es_visible = data.visible;
 
-    const updated = await actualizarProducto(id, dbData);
+    const updated = await actualizarProducto(id, dbData, auditUser);
+    const salsasIds = updated.salsas_ids || [];
+    const extrasIds = updated.extras_ids || [];
+    const bebidasIds = updated.bebidas_ids || [];
     setProducts((prev) =>
       prev.map((p) => p.id === id ? {
         id: updated.id,
@@ -175,26 +278,40 @@ export function AdminDataProvider({ children }) {
         description: updated.descripcion,
         price: Number(updated.precio),
         image: updated.imagen,
-        hasSalsas: updated.tiene_salsas,
-        hasExtras: updated.tiene_extras,
-        hasBebidas: updated.tiene_bebidas,
+        salsasIds,
+        extrasIds,
+        bebidasIds,
+        hasSalsas: salsasIds.length > 0,
+        hasExtras: extrasIds.length > 0,
+        hasBebidas: bebidasIds.length > 0,
         active: updated.activo,
+        visible: updated.es_visible !== false,
       } : p)
     );
-  }, []);
+  }, [auditUser]);
 
   const deleteProduct = useCallback(async (id) => {
-    await eliminarProducto(id);
+    await eliminarProducto(id, auditUser);
     setProducts((prev) => prev.filter((p) => p.id !== id));
-  }, []);
+  }, [auditUser]);
+
+  const toggleProductVisibility = useCallback(async (id) => {
+    const product = products.find((p) => p.id === id);
+    if (!product) return;
+    const newVisible = !product.visible;
+    await actualizarProducto(id, { es_visible: newVisible }, auditUser);
+    setProducts((prev) =>
+      prev.map((p) => p.id === id ? { ...p, visible: newVisible } : p)
+    );
+  }, [products, auditUser]);
 
   // Orders
   const updateOrderStatus = useCallback(async (id, estado) => {
-    await actualizarEstadoPedido(id, estado);
+    await actualizarEstadoPedido(id, estado, auditUser);
     setOrders((prev) =>
       prev.map((o) => (o.id === id ? { ...o, estado } : o))
     );
-  }, []);
+  }, [auditUser]);
 
   const refreshOrders = useCallback(async () => {
     const ords = await fetchPedidos();
@@ -202,6 +319,8 @@ export function AdminDataProvider({ children }) {
       id: o.id,
       fecha: o.fecha_registro,
       tipoPedido: o.tipo_pedido,
+      telefono: o.telefono || null,
+      clientId: o.usuario_id || null,
       direccion: o.direccion,
       comentarios: o.comentarios,
       total: Number(o.total),
@@ -226,7 +345,7 @@ export function AdminDataProvider({ children }) {
       descripcion: entry.descripcion,
       monto: parseFloat(entry.monto) || 0,
     };
-    const created = await crearFinanza(dbEntry);
+    const created = await crearFinanza(dbEntry, auditUser);
     setFinances((prev) => [{
       id: created.id,
       fecha: created.fecha,
@@ -235,12 +354,61 @@ export function AdminDataProvider({ children }) {
       descripcion: created.descripcion,
       monto: Number(created.monto),
     }, ...prev]);
-  }, []);
+  }, [auditUser]);
 
   const deleteFinanceEntry = useCallback(async (id) => {
-    await eliminarFinanza(id);
+    await eliminarFinanza(id, auditUser);
     setFinances((prev) => prev.filter((f) => f.id !== id));
-  }, []);
+  }, [auditUser]);
+
+  // Clients CRUD
+  const mapClient = (c) => ({
+    id: c.id,
+    name: c.nombre,
+    lastName: c.apellido || "",
+    dni: c.dni || "",
+    email: c.email || "",
+    phone: c.telefono || "",
+    address: c.direccion || "",
+  });
+
+  const addClient = useCallback(async (client) => {
+    const dbClient = {
+      nombre: client.name,
+      apellido: client.lastName || "",
+      dni: client.dni || "",
+      email: client.email || "",
+      telefono: client.phone || "",
+      direccion: client.address || "",
+    };
+    const created = await crearCliente(dbClient, auditUser);
+    const mapped = mapClient(created);
+    setClients((prev) => [...prev, mapped]);
+    return mapped;
+  }, [auditUser]);
+
+  const updateClient = useCallback(async (id, data) => {
+    const dbData = {};
+    if (data.name !== undefined) dbData.nombre = data.name;
+    if (data.lastName !== undefined) dbData.apellido = data.lastName;
+    if (data.dni !== undefined) dbData.dni = data.dni;
+    if (data.email !== undefined) dbData.email = data.email;
+    if (data.phone !== undefined) dbData.telefono = data.phone;
+    if (data.address !== undefined) dbData.direccion = data.address;
+
+    const updated = await actualizarCliente(id, dbData, auditUser);
+    setClients((prev) => prev.map((c) => c.id === id ? mapClient(updated) : c));
+  }, [auditUser]);
+
+  const deleteClient = useCallback(async (id) => {
+    await eliminarCliente(id, auditUser);
+    setClients((prev) => prev.filter((c) => c.id !== id));
+  }, [auditUser]);
+
+  const assignClientToOrder = useCallback(async (orderId, clientId) => {
+    await actualizarPedidoCliente(orderId, clientId, auditUser);
+    setOrders((prev) => prev.map((o) => o.id === orderId ? { ...o, clientId } : o));
+  }, [auditUser]);
 
   // Computed values
   const today = new Date().toISOString().split("T")[0];
@@ -321,9 +489,13 @@ export function AdminDataProvider({ children }) {
     <AdminDataContext.Provider
       value={{
         addCategory, updateCategory, deleteCategory,
-        products, addProduct, updateProduct, deleteProduct,
-        orders, updateOrderStatus, refreshOrders,
+        addSalsa, updateSalsa, deleteSalsa,
+        addExtra, updateExtra, deleteExtra,
+        addBebida, updateBebida, deleteBebida,
+        products, addProduct, updateProduct, deleteProduct, toggleProductVisibility,
+        orders, updateOrderStatus, refreshOrders, assignClientToOrder,
         finances, addFinanceEntry, deleteFinanceEntry,
+        clients, addClient, updateClient, deleteClient,
         todayOrders, todaySales, averageTicket, productsSoldToday,
         salesLast7Days, ordersByCategory, financeSummary,
         loading,

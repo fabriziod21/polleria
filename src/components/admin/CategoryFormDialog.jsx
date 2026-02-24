@@ -57,18 +57,18 @@ export default function CategoryFormDialog({ open, onClose, category, onSave }) 
 
   return (
     <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
-      <DialogContent className="bg-zinc-900 border-zinc-800 text-white max-w-md">
+      <DialogContent className="bg-white dark:bg-zinc-900 border-gray-200 dark:border-zinc-800 text-zinc-900 dark:text-white max-w-md">
         <DialogHeader>
           <DialogTitle>{category ? "Editar Categoría" : "Nueva Categoría"}</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           {!category && (
             <div className="space-y-2">
-              <Label className="text-gray-400">ID (slug)</Label>
+              <Label className="text-gray-500 dark:text-gray-400">ID (slug)</Label>
               <Input
                 value={form.id}
                 onChange={(e) => update("id", e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ""))}
-                className="bg-zinc-800 border-zinc-700 text-white"
+                className="bg-gray-50 dark:bg-zinc-800 border-gray-300 dark:border-zinc-700 text-zinc-900 dark:text-white"
                 placeholder="ej: sanguchos, hamburguesas"
               />
               <p className="text-xs text-gray-500">Se genera automáticamente si lo dejás vacío</p>
@@ -76,81 +76,83 @@ export default function CategoryFormDialog({ open, onClose, category, onSave }) 
           )}
 
           <div className="space-y-2">
-            <Label className="text-gray-400">Nombre</Label>
+            <Label className="text-gray-500 dark:text-gray-400">Nombre</Label>
             <Input
               value={form.name}
               onChange={(e) => update("name", e.target.value)}
-              className="bg-zinc-800 border-zinc-700 text-white"
+              className="bg-gray-50 dark:bg-zinc-800 border-gray-300 dark:border-zinc-700 text-zinc-900 dark:text-white"
               required
             />
           </div>
 
           <div className="space-y-2">
-            <Label className="text-gray-400">Descripción</Label>
+            <Label className="text-gray-500 dark:text-gray-400">Descripción</Label>
             <Textarea
               value={form.description}
               onChange={(e) => update("description", e.target.value)}
-              className="bg-zinc-800 border-zinc-700 text-white resize-none"
+              className="bg-gray-50 dark:bg-zinc-800 border-gray-300 dark:border-zinc-700 text-zinc-900 dark:text-white resize-none"
               rows={2}
             />
           </div>
 
           <div className="space-y-2">
-            <Label className="text-gray-400">Orden</Label>
+            <Label className="text-gray-500 dark:text-gray-400">Orden</Label>
             <Input
               type="number"
               value={form.sortOrder}
               onChange={(e) => update("sortOrder", e.target.value)}
-              className="bg-zinc-800 border-zinc-700 text-white w-24"
+              className="bg-gray-50 dark:bg-zinc-800 border-gray-300 dark:border-zinc-700 text-zinc-900 dark:text-white w-24"
             />
           </div>
 
           {/* Imagen */}
           <div className="space-y-2">
-            <Label className="text-gray-400">Imagen</Label>
-            <div className="flex gap-2">
-              <Input
-                value={form.image}
-                onChange={(e) => update("image", e.target.value)}
-                className="bg-zinc-800 border-zinc-700 text-white flex-1"
-                placeholder="URL o sube una imagen"
-              />
-              <label
-                className={`inline-flex items-center justify-center rounded-md border border-zinc-700 px-3 h-9 cursor-pointer transition-colors ${
-                  uploading ? "opacity-50 cursor-wait" : "text-gray-400 hover:text-white hover:bg-zinc-800"
-                }`}
-              >
-                {uploading ? (
-                  <div className="w-4 h-4 border-2 border-gray-400 border-t-transparent rounded-full animate-spin" />
-                ) : (
-                  <Upload className="w-4 h-4" />
-                )}
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={handleFileUpload}
-                  disabled={uploading}
-                  className="hidden"
+            <Label className="text-gray-500 dark:text-gray-400">Imagen</Label>
+            <div className="flex gap-3 items-start">
+              {form.image && (
+                <div className="w-20 h-20 rounded-lg overflow-hidden border border-gray-200 dark:border-zinc-800 flex-shrink-0">
+                  <img
+                    src={form.image}
+                    alt="Preview"
+                    className="w-full h-full object-cover"
+                    onError={(e) => { e.target.style.display = "none"; }}
+                  />
+                </div>
+              )}
+              <div className="flex-1 flex gap-2">
+                <Input
+                  value={form.image}
+                  onChange={(e) => update("image", e.target.value)}
+                  className="bg-gray-50 dark:bg-zinc-800 border-gray-300 dark:border-zinc-700 text-zinc-900 dark:text-white flex-1"
+                  placeholder="URL o sube una imagen"
                 />
-              </label>
-            </div>
-            {form.image && (
-              <div className="mt-2 relative w-full h-32 rounded-lg overflow-hidden border border-zinc-800">
-                <img
-                  src={form.image}
-                  alt="Preview"
-                  className="w-full h-full object-cover"
-                  onError={(e) => { e.target.style.display = "none"; }}
-                />
+                <label
+                  className={`inline-flex items-center justify-center rounded-md border border-gray-300 dark:border-zinc-700 px-3 h-9 cursor-pointer transition-colors ${
+                    uploading ? "opacity-50 cursor-wait" : "text-gray-400 hover:text-zinc-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-zinc-800"
+                  }`}
+                >
+                  {uploading ? (
+                    <div className="w-4 h-4 border-2 border-gray-400 border-t-transparent rounded-full animate-spin" />
+                  ) : (
+                    <Upload className="w-4 h-4" />
+                  )}
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={handleFileUpload}
+                    disabled={uploading}
+                    className="hidden"
+                  />
+                </label>
               </div>
-            )}
+            </div>
           </div>
 
           <div className="flex gap-3 pt-2">
-            <Button type="button" variant="ghost" onClick={onClose} className="flex-1 text-gray-400 hover:text-white">
+            <Button type="button" variant="ghost" onClick={onClose} className="flex-1 text-gray-500 dark:text-gray-400 hover:text-zinc-900 dark:hover:text-white">
               Cancelar
             </Button>
-            <Button type="submit" disabled={uploading} className="flex-1 bg-red-600 hover:bg-red-700 text-white disabled:opacity-50">
+            <Button type="submit" disabled={uploading} className="flex-1 bg-zinc-900 dark:bg-white hover:bg-zinc-800 dark:hover:bg-gray-200 text-white dark:text-zinc-900 font-semibold disabled:opacity-50">
               {category ? "Guardar" : "Crear"}
             </Button>
           </div>
