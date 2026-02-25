@@ -230,21 +230,49 @@ export async function eliminarBebida(id, usuario) {
 // PEDIDOS
 // ============================================
 export async function crearPedido(pedido, items, usuario) {
+  // Calcular IGV y descuentos por item
+  const detallesCalc = items.map((item) => {
+    const precioOriginal = item.precio_original ?? item.precio_unitario;
+    const precioUnitario = item.precio_unitario;
+    const cantidad = item.cantidad;
+    const totalItem = precioUnitario * cantidad;
+    const subtotalItem = Math.round((totalItem / 1.18) * 100) / 100;
+    const igvItem = Math.round((totalItem - subtotalItem) * 100) / 100;
+    const descuento = Math.round((precioOriginal - precioUnitario) * cantidad * 100) / 100;
+    return { ...item, precioOriginal, subtotalItem, igvItem, descuento: Math.max(descuento, 0) };
+  });
+
+  // Totales del pedido
+  const totalPedido = pedido.total;
+  const subtotalPedido = Math.round((totalPedido / 1.18) * 100) / 100;
+  const igvPedido = Math.round((totalPedido - subtotalPedido) * 100) / 100;
+  const descuentoTotal = detallesCalc.reduce((s, d) => s + d.descuento, 0);
+
   // Insertar pedido
   const { data: pedidoData, error: pedidoError } = await supabase
     .from("pedidos")
-    .insert({ ...pedido, usuario_registro: usuario || null })
+    .insert({
+      ...pedido,
+      subtotal: subtotalPedido,
+      igv: igvPedido,
+      descuento_total: Math.round(descuentoTotal * 100) / 100,
+      usuario_registro: usuario || null,
+    })
     .select()
     .single();
   if (pedidoError) throw pedidoError;
 
   // Insertar detalle
-  const detalles = items.map((item) => ({
+  const detalles = detallesCalc.map((item) => ({
     pedido_id: pedidoData.id,
     producto_id: item.producto_id,
     nombre_producto: item.nombre_producto,
     cantidad: item.cantidad,
     precio_unitario: item.precio_unitario,
+    precio_original: item.precioOriginal,
+    descuento: item.descuento,
+    subtotal_item: item.subtotalItem,
+    igv_item: item.igvItem,
     salsas_seleccionadas: item.salsas_seleccionadas || [],
     extras_seleccionados: item.extras_seleccionados || [],
     bebidas_seleccionadas: item.bebidas_seleccionadas || [],

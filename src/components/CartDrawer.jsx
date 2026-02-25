@@ -63,15 +63,20 @@ export default function CartDrawer() {
           comentarios: comentarios.trim() || null,
           total: totalPrice,
         },
-        items.map((item) => ({
-          producto_id: item.product.id,
-          nombre_producto: item.product.name,
-          cantidad: item.quantity,
-          precio_unitario: item.product.price,
-          salsas_seleccionadas: item.selectedSalsas,
-          extras_seleccionados: item.selectedExtras,
-          bebidas_seleccionadas: item.selectedBebidas,
-        }))
+        items.map((item) => {
+          const itemTotal = getItemTotal(item);
+          const precioUnitarioTotal = itemTotal / item.quantity;
+          return {
+            producto_id: item.product.id,
+            nombre_producto: item.product.name,
+            cantidad: item.quantity,
+            precio_unitario: Math.round(precioUnitarioTotal * 100) / 100,
+            precio_original: Math.round(precioUnitarioTotal * 100) / 100,
+            salsas_seleccionadas: item.selectedSalsas,
+            extras_seleccionados: item.selectedExtras,
+            bebidas_seleccionadas: item.selectedBebidas,
+          };
+        })
       );
     } catch (err) {
       console.error("Error guardando pedido:", err);
@@ -230,10 +235,20 @@ export default function CartDrawer() {
 
             {/* Footer - Checkout */}
             <div className="border-t border-zinc-800 p-4 space-y-3 overflow-y-auto max-h-[55vh]">
-              {/* Total */}
-              <div className="flex items-center justify-between">
-                <span className="text-sm font-medium text-gray-400">Total</span>
-                <span className="text-xl font-bold text-red-400">S/{totalPrice.toFixed(2)}</span>
+              {/* Desglose IGV */}
+              <div className="space-y-1">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs text-gray-500">Subtotal (sin IGV)</span>
+                  <span className="text-xs text-gray-400 tabular-nums">S/{(Math.round((totalPrice / 1.18) * 100) / 100).toFixed(2)}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-xs text-gray-500">IGV (18%)</span>
+                  <span className="text-xs text-gray-400 tabular-nums">S/{(Math.round((totalPrice - totalPrice / 1.18) * 100) / 100).toFixed(2)}</span>
+                </div>
+                <div className="flex items-center justify-between pt-1">
+                  <span className="text-sm font-medium text-gray-400">Total</span>
+                  <span className="text-xl font-bold text-red-400">S/{totalPrice.toFixed(2)}</span>
+                </div>
               </div>
 
               <Separator className="bg-zinc-800" />

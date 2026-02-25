@@ -89,6 +89,9 @@ export function AdminDataProvider({ children }) {
           direccion: o.direccion,
           comentarios: o.comentarios,
           total: Number(o.total),
+          subtotal: Number(o.subtotal || 0),
+          igv: Number(o.igv || 0),
+          descuentoTotal: Number(o.descuento_total || 0),
           estado: o.estado,
           items: (o.pedido_detalle || []).map((d) => ({
             id: d.id,
@@ -96,6 +99,10 @@ export function AdminDataProvider({ children }) {
             name: d.nombre_producto,
             quantity: d.cantidad,
             unitPrice: Number(d.precio_unitario),
+            originalPrice: d.precio_original != null ? Number(d.precio_original) : Number(d.precio_unitario),
+            descuento: Number(d.descuento || 0),
+            subtotalItem: Number(d.subtotal_item || 0),
+            igvItem: Number(d.igv_item || 0),
           })),
         })));
 
@@ -324,6 +331,9 @@ export function AdminDataProvider({ children }) {
       direccion: o.direccion,
       comentarios: o.comentarios,
       total: Number(o.total),
+      subtotal: Number(o.subtotal || 0),
+      igv: Number(o.igv || 0),
+      descuentoTotal: Number(o.descuento_total || 0),
       estado: o.estado,
       items: (o.pedido_detalle || []).map((d) => ({
         id: d.id,
@@ -331,6 +341,10 @@ export function AdminDataProvider({ children }) {
         name: d.nombre_producto,
         quantity: d.cantidad,
         unitPrice: Number(d.precio_unitario),
+        originalPrice: d.precio_original != null ? Number(d.precio_original) : Number(d.precio_unitario),
+        descuento: Number(d.descuento || 0),
+        subtotalItem: Number(d.subtotal_item || 0),
+        igvItem: Number(d.igv_item || 0),
       })),
     })));
   }, []);
@@ -410,11 +424,17 @@ export function AdminDataProvider({ children }) {
     setOrders((prev) => prev.map((o) => o.id === orderId ? { ...o, clientId } : o));
   }, [auditUser]);
 
+  // Helper: fecha en zona horaria Lima (UTC-5)
+  const toLimaDateStr = (dateStr) => {
+    const d = new Date(dateStr);
+    return d.toLocaleDateString("en-CA", { timeZone: "America/Lima" }); // formato YYYY-MM-DD
+  };
+
   // Computed values
-  const today = new Date().toISOString().split("T")[0];
+  const today = toLimaDateStr(new Date().toISOString());
 
   const todayOrders = useMemo(
-    () => orders.filter((o) => o.fecha && o.fecha.startsWith(today)),
+    () => orders.filter((o) => o.fecha && toLimaDateStr(o.fecha) === today),
     [orders, today]
   );
 
@@ -443,9 +463,9 @@ export function AdminDataProvider({ children }) {
     for (let i = 6; i >= 0; i--) {
       const d = new Date();
       d.setDate(d.getDate() - i);
-      const key = d.toISOString().split("T")[0];
+      const key = toLimaDateStr(d.toISOString());
       const total = orders
-        .filter((o) => o.fecha && o.fecha.startsWith(key))
+        .filter((o) => o.fecha && toLimaDateStr(o.fecha) === key)
         .reduce((sum, o) => sum + o.total, 0);
       days.push({
         day: dayNames[d.getDay()],

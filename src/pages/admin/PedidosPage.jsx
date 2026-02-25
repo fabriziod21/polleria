@@ -103,7 +103,7 @@ export default function PedidosPage() {
 
   const formatDate = (iso) => {
     const d = new Date(iso);
-    return d.toLocaleDateString("es-PE", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" });
+    return d.toLocaleDateString("es-PE", { timeZone: "America/Lima", day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" });
   };
 
   return (

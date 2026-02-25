@@ -1,5 +1,5 @@
 import { useState, useMemo, useRef, useEffect } from "react";
-import { Plus, Minus, Trash2, Search, UserPlus, ShoppingCart, UtensilsCrossed, X, CheckCircle2, AlertCircle } from "lucide-react";
+import { Plus, Minus, Trash2, Search, UserPlus, ShoppingCart, UtensilsCrossed, X, CheckCircle2, AlertCircle, Pencil, Tag } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -197,6 +197,19 @@ export default function POSPage() {
     [cart]
   );
 
+  const subtotal = useMemo(() => Math.round((total / 1.18) * 100) / 100, [total]);
+  const igv = useMemo(() => Math.round((total - subtotal) * 100) / 100, [total, subtotal]);
+  const descuentoTotal = useMemo(
+    () => cart.reduce((sum, item) => {
+      const desc = (item.originalPrice - item.unitPrice) * item.quantity;
+      return sum + Math.max(desc, 0);
+    }, 0),
+    [cart]
+  );
+
+  const [editingPrice, setEditingPrice] = useState(null);
+  const [editPriceValue, setEditPriceValue] = useState("");
+
   const addToCart = (product) => {
     setCart((prev) => {
       const existing = prev.find((i) => i.productId === product.id);
@@ -208,6 +221,7 @@ export default function POSPage() {
       return [...prev, {
         productId: product.id,
         name: product.name,
+        originalPrice: product.price,
         unitPrice: product.price,
         quantity: 1,
         salsas: [],
@@ -227,6 +241,21 @@ export default function POSPage() {
 
   const removeFromCart = (productId) => {
     setCart((prev) => prev.filter((i) => i.productId !== productId));
+  };
+
+  const startEditPrice = (item) => {
+    setEditingPrice(item.productId);
+    setEditPriceValue(item.unitPrice.toFixed(2));
+  };
+
+  const confirmEditPrice = (productId) => {
+    const newPrice = parseFloat(editPriceValue);
+    if (!isNaN(newPrice) && newPrice >= 0) {
+      setCart((prev) =>
+        prev.map((i) => i.productId === productId ? { ...i, unitPrice: Math.round(newPrice * 100) / 100 } : i)
+      );
+    }
+    setEditingPrice(null);
   };
 
   const handleQuickClientSave = async (data) => {
@@ -253,6 +282,7 @@ export default function POSPage() {
         nombre_producto: item.name,
         cantidad: item.quantity,
         precio_unitario: item.unitPrice,
+        precio_original: item.originalPrice,
         salsas_seleccionadas: item.salsas || [],
         extras_seleccionados: item.extras || [],
         bebidas_seleccionadas: item.bebidas || [],
@@ -266,6 +296,9 @@ export default function POSPage() {
         success: true,
         orderId: pedidoId,
         total,
+        subtotal,
+        igv,
+        descuentoTotal,
         clientName: selectedClient ? `${selectedClient.name} ${selectedClient.lastName}`.trim() : null,
         itemCount,
       });
@@ -393,46 +426,92 @@ export default function POSPage() {
               <p className="text-xs">Agrega productos al carrito</p>
             </div>
           ) : (
-            cart.map((item) => (
-              <div key={item.productId} className="flex items-center gap-3 bg-gray-50 dark:bg-zinc-800/50 rounded-xl p-2.5">
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm text-zinc-900 dark:text-white truncate">{item.name}</p>
-                  <p className="text-xs text-gray-500">S/{item.unitPrice.toFixed(2)} c/u</p>
+            cart.map((item) => {
+              const hasDiscount = item.unitPrice < item.originalPrice;
+              return (
+                <div key={item.productId} className="bg-gray-50 dark:bg-zinc-800/50 rounded-xl p-2.5 space-y-1.5">
+                  <div className="flex items-center gap-3">
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm text-zinc-900 dark:text-white truncate">{item.name}</p>
+                      <div className="flex items-center gap-1.5">
+                        {editingPrice === item.productId ? (
+                          <div className="flex items-center gap-1 mt-0.5">
+                            <span className="text-xs text-gray-500">S/</span>
+                            <input
+                              type="number"
+                              step="0.01"
+                              min="0"
+                              value={editPriceValue}
+                              onChange={(e) => setEditPriceValue(e.target.value)}
+                              onKeyDown={(e) => {
+                                if (e.key === "Enter") confirmEditPrice(item.productId);
+                                if (e.key === "Escape") setEditingPrice(null);
+                              }}
+                              onBlur={() => confirmEditPrice(item.productId)}
+                              autoFocus
+                              className="w-16 h-5 text-xs bg-white dark:bg-zinc-700 border border-gray-300 dark:border-zinc-600 rounded px-1 text-zinc-900 dark:text-white tabular-nums"
+                            />
+                          </div>
+                        ) : (
+                          <button
+                            onClick={() => startEditPrice(item)}
+                            className="flex items-center gap-1 text-xs text-gray-500 hover:text-red-600 dark:hover:text-red-400 transition-colors mt-0.5 group"
+                          >
+                            {hasDiscount && (
+                              <span className="line-through text-gray-400">S/{item.originalPrice.toFixed(2)}</span>
+                            )}
+                            <span className={hasDiscount ? "text-red-600 dark:text-red-400 font-medium" : ""}>
+                              S/{item.unitPrice.toFixed(2)} c/u
+                            </span>
+                            <Pencil className="w-2.5 h-2.5 opacity-0 group-hover:opacity-100 transition-opacity" />
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-7 w-7 text-gray-400 hover:text-zinc-900 dark:hover:text-white hover:bg-gray-200 dark:hover:bg-zinc-700 rounded-lg"
+                        onClick={() => updateQuantity(item.productId, -1)}
+                      >
+                        <Minus className="w-3 h-3" />
+                      </Button>
+                      <span className="text-sm font-bold text-zinc-900 dark:text-white w-6 text-center tabular-nums">{item.quantity}</span>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-7 w-7 text-gray-400 hover:text-zinc-900 dark:hover:text-white hover:bg-gray-200 dark:hover:bg-zinc-700 rounded-lg"
+                        onClick={() => updateQuantity(item.productId, 1)}
+                      >
+                        <Plus className="w-3 h-3" />
+                      </Button>
+                    </div>
+                    <div className="flex items-center gap-2 flex-shrink-0">
+                      <span className="text-sm font-bold text-zinc-900 dark:text-white tabular-nums w-16 text-right">
+                        S/{(item.unitPrice * item.quantity).toFixed(2)}
+                      </span>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-7 w-7 text-gray-400 dark:text-gray-600 hover:text-red-400 hover:bg-red-600/10 rounded-lg"
+                        onClick={() => removeFromCart(item.productId)}
+                      >
+                        <Trash2 className="w-3 h-3" />
+                      </Button>
+                    </div>
+                  </div>
+                  {hasDiscount && (
+                    <div className="flex items-center gap-1.5">
+                      <Tag className="w-3 h-3 text-amber-500" />
+                      <span className="text-[10px] text-amber-600 dark:text-amber-400 font-medium">
+                        Descuento: -S/{((item.originalPrice - item.unitPrice) * item.quantity).toFixed(2)}
+                      </span>
+                    </div>
+                  )}
                 </div>
-                <div className="flex items-center gap-1.5">
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-7 w-7 text-gray-400 hover:text-zinc-900 dark:hover:text-white hover:bg-gray-200 dark:hover:bg-zinc-700 rounded-lg"
-                    onClick={() => updateQuantity(item.productId, -1)}
-                  >
-                    <Minus className="w-3 h-3" />
-                  </Button>
-                  <span className="text-sm font-bold text-zinc-900 dark:text-white w-6 text-center tabular-nums">{item.quantity}</span>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-7 w-7 text-gray-400 hover:text-zinc-900 dark:hover:text-white hover:bg-gray-200 dark:hover:bg-zinc-700 rounded-lg"
-                    onClick={() => updateQuantity(item.productId, 1)}
-                  >
-                    <Plus className="w-3 h-3" />
-                  </Button>
-                </div>
-                <div className="flex items-center gap-2 flex-shrink-0">
-                  <span className="text-sm font-bold text-zinc-900 dark:text-white tabular-nums w-16 text-right">
-                    S/{(item.unitPrice * item.quantity).toFixed(2)}
-                  </span>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-7 w-7 text-gray-400 dark:text-gray-600 hover:text-red-400 hover:bg-red-600/10 rounded-lg"
-                    onClick={() => removeFromCart(item.productId)}
-                  >
-                    <Trash2 className="w-3 h-3" />
-                  </Button>
-                </div>
-              </div>
-            ))
+              );
+            })
           )}
         </div>
 
@@ -472,10 +551,26 @@ export default function POSPage() {
             placeholder="Comentarios (opcional)"
           />
 
-          {/* Total */}
-          <div className="flex items-center justify-between py-2 border-t border-gray-200 dark:border-zinc-800/60">
-            <span className="text-sm text-gray-500 dark:text-gray-400">Total</span>
-            <span className="text-xl font-bold text-zinc-900 dark:text-white tabular-nums">S/{total.toFixed(2)}</span>
+          {/* Desglose IGV */}
+          <div className="space-y-1.5 py-2 border-t border-gray-200 dark:border-zinc-800/60">
+            <div className="flex items-center justify-between">
+              <span className="text-xs text-gray-500 dark:text-gray-400">Subtotal (sin IGV)</span>
+              <span className="text-xs text-gray-600 dark:text-gray-300 tabular-nums">S/{subtotal.toFixed(2)}</span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-xs text-gray-500 dark:text-gray-400">IGV (18%)</span>
+              <span className="text-xs text-gray-600 dark:text-gray-300 tabular-nums">S/{igv.toFixed(2)}</span>
+            </div>
+            {descuentoTotal > 0 && (
+              <div className="flex items-center justify-between">
+                <span className="text-xs text-amber-600 dark:text-amber-400">Descuento aplicado</span>
+                <span className="text-xs text-amber-600 dark:text-amber-400 tabular-nums">-S/{descuentoTotal.toFixed(2)}</span>
+              </div>
+            )}
+            <div className="flex items-center justify-between pt-1.5 border-t border-gray-200 dark:border-zinc-800/60">
+              <span className="text-sm font-medium text-zinc-900 dark:text-white">Total</span>
+              <span className="text-xl font-bold text-zinc-900 dark:text-white tabular-nums">S/{total.toFixed(2)}</span>
+            </div>
           </div>
 
           <Button
@@ -519,6 +614,20 @@ export default function POSPage() {
                   <span className="text-gray-500 dark:text-gray-400">Items</span>
                   <span className="text-zinc-900 dark:text-white">{orderResult.itemCount} producto{orderResult.itemCount !== 1 ? "s" : ""}</span>
                 </div>
+                <div className="flex justify-between text-xs">
+                  <span className="text-gray-500 dark:text-gray-400">Subtotal</span>
+                  <span className="text-gray-600 dark:text-gray-300">S/{orderResult.subtotal?.toFixed(2)}</span>
+                </div>
+                <div className="flex justify-between text-xs">
+                  <span className="text-gray-500 dark:text-gray-400">IGV (18%)</span>
+                  <span className="text-gray-600 dark:text-gray-300">S/{orderResult.igv?.toFixed(2)}</span>
+                </div>
+                {orderResult.descuentoTotal > 0 && (
+                  <div className="flex justify-between text-xs">
+                    <span className="text-amber-600 dark:text-amber-400">Descuento</span>
+                    <span className="text-amber-600 dark:text-amber-400">-S/{orderResult.descuentoTotal?.toFixed(2)}</span>
+                  </div>
+                )}
                 <div className="flex justify-between text-sm pt-2 border-t border-gray-200 dark:border-zinc-700">
                   <span className="text-gray-500 dark:text-gray-400 font-medium">Total</span>
                   <span className="text-zinc-900 dark:text-white font-bold text-base">S/{orderResult.total?.toFixed(2)}</span>

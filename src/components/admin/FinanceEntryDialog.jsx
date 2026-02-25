@@ -7,7 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 
 export default function FinanceEntryDialog({ open, onClose, onSave }) {
   const [form, setForm] = useState({
-    fecha: new Date().toISOString().split("T")[0],
+    fecha: new Date().toLocaleDateString("en-CA", { timeZone: "America/Lima" }),
     tipo: "entrada",
     categoria: "ventas",
     descripcion: "",
@@ -23,7 +23,7 @@ export default function FinanceEntryDialog({ open, onClose, onSave }) {
       monto: parseFloat(form.monto) || 0,
     });
     setForm({
-      fecha: new Date().toISOString().split("T")[0],
+      fecha: new Date().toLocaleDateString("en-CA", { timeZone: "America/Lima" }),
       tipo: "entrada",
       categoria: "ventas",
       descripcion: "",

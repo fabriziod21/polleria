@@ -38,7 +38,7 @@ export default function FinanzasPage() {
 
   const formatDate = (dateStr) => {
     const d = new Date(dateStr + "T00:00:00");
-    return d.toLocaleDateString("es-PE", { day: "2-digit", month: "short" });
+    return d.toLocaleDateString("es-PE", { timeZone: "America/Lima", day: "2-digit", month: "short" });
   };
 
   return (
