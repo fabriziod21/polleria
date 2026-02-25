@@ -32,7 +32,7 @@ export default function AdminSidebar({ onNavigate }) {
   const { logout } = useAdminAuth();
 
   return (
-    <div className="flex flex-col h-full bg-white dark:bg-zinc-950 border-r border-gray-200 dark:border-zinc-800/60">
+    <div className="flex flex-col h-full overflow-y-auto bg-white dark:bg-zinc-950 border-r border-gray-200 dark:border-zinc-800/60">
       {/* Brand */}
       <div className="p-5 flex items-center gap-3">
         <div className="w-10 h-10 rounded-xl bg-red-600/10 dark:bg-red-600/20 flex items-center justify-center">

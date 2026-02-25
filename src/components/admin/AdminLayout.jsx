@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { Outlet, useLocation } from "react-router-dom";
-import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { Separator } from "@/components/ui/separator";
 import { Sandwich, Heart, LayoutDashboard, ClipboardList, FolderOpen, Package, Beef, Users, ShoppingCart } from "lucide-react";
 import AdminSidebar from "./AdminSidebar";
@@ -26,21 +25,26 @@ function AdminLayoutInner() {
   return (
     <div className={`min-h-screen ${isDark ? "dark" : ""}`}>
       <div className="min-h-screen bg-gray-50 dark:bg-zinc-950 text-zinc-900 dark:text-white">
-        {/* Desktop Sidebar */}
-        <aside className="hidden lg:flex lg:w-64 lg:flex-col lg:fixed lg:inset-y-0">
-          <AdminSidebar />
+        {/* Mobile Sidebar Overlay */}
+        {sidebarOpen && (
+          <div
+            className="fixed inset-0 z-40 bg-black/40 backdrop-blur-sm lg:hidden transition-opacity"
+            onClick={() => setSidebarOpen(false)}
+          />
+        )}
+
+        {/* Sidebar - collapsible push on mobile, fixed on desktop */}
+        <aside
+          className={`fixed inset-y-0 left-0 z-50 w-64 flex flex-col transition-transform duration-300 ease-in-out lg:translate-x-0 ${
+            sidebarOpen ? "translate-x-0" : "-translate-x-full"
+          }`}
+        >
+          <AdminSidebar onNavigate={() => setSidebarOpen(false)} />
         </aside>
 
-        {/* Mobile Sidebar */}
-        <Sheet open={sidebarOpen} onOpenChange={setSidebarOpen}>
-          <SheetContent side="left" className="w-64 p-0 bg-white dark:bg-zinc-950 border-r border-gray-200 dark:border-zinc-800">
-            <AdminSidebar onNavigate={() => setSidebarOpen(false)} />
-          </SheetContent>
-        </Sheet>
-
         {/* Main */}
-        <div className="lg:pl-64 min-h-screen flex flex-col">
-          <AdminTopbar onMenuToggle={() => setSidebarOpen(true)} />
+        <div className="min-h-screen flex flex-col lg:pl-64">
+          <AdminTopbar onMenuToggle={() => setSidebarOpen((v) => !v)} />
           <main className="flex-1 p-4 md:p-6">
             {header && (
               <div className="flex items-center gap-3 mb-5">
