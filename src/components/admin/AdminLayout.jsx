@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Outlet, useLocation } from "react-router-dom";
 import { Separator } from "@/components/ui/separator";
-import { Sandwich, Heart, LayoutDashboard, ClipboardList, FolderOpen, Package, Beef, Users, ShoppingCart } from "lucide-react";
+import { Sandwich, Heart, LayoutDashboard, ClipboardList, FolderOpen, Package, Beef, Users, ShoppingCart, PanelLeftClose, PanelLeftOpen } from "lucide-react";
 import AdminSidebar from "./AdminSidebar";
 import AdminTopbar from "./AdminTopbar";
 import { AdminThemeProvider, useAdminTheme } from "@/context/AdminThemeContext";
@@ -18,6 +18,7 @@ const pageHeaders = {
 
 function AdminLayoutInner() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [collapsed, setCollapsed] = useState(false);
   const { isDark } = useAdminTheme();
   const location = useLocation();
   const header = pageHeaders[location.pathname];
@@ -33,17 +34,28 @@ function AdminLayoutInner() {
           />
         )}
 
-        {/* Sidebar - collapsible push on mobile, fixed on desktop */}
+        {/* Sidebar - collapsible push on mobile, collapsible width on desktop */}
         <aside
-          className={`fixed inset-y-0 left-0 z-50 w-64 flex flex-col transition-transform duration-300 ease-in-out lg:translate-x-0 ${
+          className={`fixed inset-y-0 left-0 z-50 flex flex-col transition-all duration-300 ease-in-out lg:translate-x-0 ${
             sidebarOpen ? "translate-x-0" : "-translate-x-full"
-          }`}
+          } ${collapsed ? "lg:w-[68px]" : "lg:w-64"} w-64`}
         >
-          <AdminSidebar onNavigate={() => setSidebarOpen(false)} />
+          <AdminSidebar onNavigate={() => setSidebarOpen(false)} collapsed={collapsed} />
+          {/* Collapse toggle button - desktop only */}
+          <button
+            onClick={() => setCollapsed((v) => !v)}
+            className="hidden lg:flex absolute -right-3 top-20 w-6 h-6 rounded-full bg-white dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 items-center justify-center shadow-sm hover:bg-gray-50 dark:hover:bg-zinc-700 transition-colors z-50"
+          >
+            {collapsed ? (
+              <PanelLeftOpen className="w-3 h-3 text-gray-500 dark:text-zinc-400" />
+            ) : (
+              <PanelLeftClose className="w-3 h-3 text-gray-500 dark:text-zinc-400" />
+            )}
+          </button>
         </aside>
 
         {/* Main */}
-        <div className="min-h-screen flex flex-col lg:pl-64">
+        <div className={`min-h-screen flex flex-col transition-all duration-300 ${collapsed ? "lg:pl-[68px]" : "lg:pl-64"}`}>
           <AdminTopbar onMenuToggle={() => setSidebarOpen((v) => !v)} />
           <main className="flex-1 p-4 md:p-6">
             {header && (

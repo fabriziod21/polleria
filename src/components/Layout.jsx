@@ -13,7 +13,7 @@ export default function Layout() {
   return (
     <div className="min-h-screen bg-zinc-950 text-white">
       <Navbar />
-      <main className="pt-16 pb-20 md:pb-0">
+      <main className="pt-16 md:pt-24 pb-20 md:pb-0">
         <Outlet />
       </main>
       <Footer />
